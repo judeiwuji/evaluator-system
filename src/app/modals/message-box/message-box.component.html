@@ -1,0 +1,56 @@
+<div class="modal-header border-bottom-0">
+    <!-- Title -->
+    <h6 class="modal-title">{{settings.title}}</h6>
+    <!-- Title -->
+</div>
+<div class="modal-body">
+    <!-- Icon -->
+    <div class="my-2 text-center">
+        <span *ngIf="settings.type === MessageBoxType.Info">
+            <i class="fas fa-info-circle fa-2x text-info"></i>
+        </span>
+        <span *ngIf="settings.type === MessageBoxType.Success">
+            <i class="fas fa-check-circle fa-2x text-success"></i>
+        </span>
+        <span *ngIf="settings.type === MessageBoxType.Warning">
+            <i class="fas fa-exclamation-circle fa-3x text-warning"></i>
+        </span>
+        <span *ngIf="settings.type === MessageBoxType.Error">
+            <i class="fas fa-exclamation-circle fa-2x text-danger"></i>
+        </span>
+    </div>
+    <!-- Icon -->
+    <!-- Message -->
+    <div class="my-1 text-center text-muted" *ngIf="settings.type !== MessageBoxType.Html">
+        <h5>{{settings.message}}</h5>
+    </div>
+    <div class="my-1" *ngIf="settings.type === MessageBoxType.Html">
+        <pre [innerHtml]="settings.message"></pre>
+    </div>
+    <!-- Message -->
+</div>
+<div class="modal-footer border-top-0">
+    <ng-container *ngIf="settings.type === MessageBoxType.Warning">
+        <button class="btn btn-danger rounded mr-2" (click)="close(MessageBoxButton.Cancel)">
+            Cancel
+        </button>
+        <button class="btn btn-success rounded" (click)="close(MessageBoxButton.Confirm)">
+            Confirm
+        </button>
+    </ng-container>
+
+    <ng-container *ngIf="settings.type === MessageBoxType.Success || settings.type === MessageBoxType.Info">
+        <button class="btn rounded"
+            [ngClass]="{'btn-success': settings.type === MessageBoxType.Success, 'btn-info': settings.type === MessageBoxType.Info }"
+            (click)="close(MessageBoxButton.Ok)">
+            Ok
+        </button>
+    </ng-container>
+
+    <ng-container *ngIf="settings.type === MessageBoxType.Error || settings.type === MessageBoxType.Html">
+        <button class="btn btn-light rounded" (click)="close(MessageBoxButton.Close)">
+            Close
+        </button>
+    </ng-container>
+
+</div>

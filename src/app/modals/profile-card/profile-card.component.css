@@ -1,0 +1,16 @@
+.profile-card .heading {
+  font-size: 2.2rem;
+  font-weight: bold;
+  font-family: "Roboto", sans-serif;
+  color: #333;
+  text-transform: capitalize;
+  margin-bottom: 0.1em;
+}
+
+.profile-card .sub-heading {
+  font-size: 0.9rem;
+  font-weight: normal;
+  font-family: "Roboto", sans-serif;
+  color: #333;
+  text-transform: lowercase;
+}

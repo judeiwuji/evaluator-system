@@ -1,0 +1,81 @@
+<div class="d-flex">
+    <app-sidebar class="sidebar" [userType]="'student'" [activeTab]="'dashboard'"></app-sidebar>
+    <div class="main-content">
+        <app-navbar></app-navbar>
+        <div class="p-2">
+            <div class="container">
+                <div class="wrapper">
+                    <!-- Greeting -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="py-2">
+                                <div class="alert alert-info border-info rounded">
+                                    <div class="d-flex">
+                                        <span class="mr-1">
+                                            <i class="fas fa-comment"></i>
+                                        </span>
+                                        <span class="text-capitalize">
+                                            <b>Hello!</b> Welcome back {{user?.surname}}, {{user?.othernames}}...
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Greeting -->
+
+                    <div class="row">
+                        <!-- Profile -->
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <a routerLink="/student/account/" class="btn btn-block shadow-none">
+                                <div class="card rounded bg-warning">
+                                    <div class="card-body sized-box">
+                                        <span class="d-block w-100">
+                                            <i class="fas fa-user-alt fa-3x"></i>
+                                        </span>
+                                        <p class="mt-2 mb-1 w-100">Profile</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <!-- Profile -->
+
+                        <!-- Results -->
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <a routerLink="/student/results/" class="btn btn-block shadow-none">
+                                <div class="card rounded bg-info text-white">
+                                    <div class="card-body sized-box">
+                                        <span class="d-block w-100">
+                                            <i class="fas fa-list-alt fa-3x"></i>
+                                        </span>
+                                        <p class="mt-2 mb-1 w-100">Results</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <!-- Results -->
+
+                        <!-- Quiz -->
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <a routerLink="/student/quizzes" class="btn btn-block shadow-none">
+                                <div class="card rounded bg-warning">
+                                    <div class="card-body sized-box">
+                                        <span class="d-block w-100">
+                                            <i class="fas fa-pen fa-3x"></i>
+                                        </span>
+                                        <p class="mt-2 mb-1 w-100">Quiz</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <!-- Quiz -->
+
+                    </div>
+                </div>
+                <!-- Footer -->
+                <app-footer></app-footer>
+                <!-- Footer -->
+            </div>
+        </div>
+    </div>
+</div>

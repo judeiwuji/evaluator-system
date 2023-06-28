@@ -1,0 +1,133 @@
+<app-navbar [navTab]="quiz?.title"></app-navbar>
+<!-- Quiz Board -->
+<ng-container *ngIf="!quiz || quiz?.active">
+  <div class="container-lg">
+    <div class="row my-3">
+      <div
+        class="col-12 col-lg-7"
+        [ngClass]="{ 'align-self-center': questions.length === 0 }"
+      >
+        <!-- Warning -->
+        <ng-container *ngIf="questions.length === 0">
+          <div class="alert alert-warning rounded border-warning mb-2">
+            <div class="d-flex">
+              <p class="mb-0">
+                Don't refresh this page. Questions will be loaded automatically.
+              </p>
+              <span class="ml-2">
+                <i class="fas fa-lightbulb"></i>
+              </span>
+            </div>
+          </div>
+          <a routerLink="/student/dashboard" class="btn btn-dark btn-sm">
+            Dashboard
+          </a>
+        </ng-container>
+        <!-- Warning -->
+
+        <!-- Quiz -->
+        <ng-container *ngFor="let question of questions; first as isFirst">
+          <ng-container *ngIf="isFirst">
+            <!-- Timer -->
+            <div class="d-flex justify-content-end my-2">
+              <app-timer
+                [timeout]="question.timeout"
+                (onTimerStopped)="onTimerStopped($event)"
+              >
+              </app-timer>
+            </div>
+            <!-- Timer -->
+
+            <!-- Instructions -->
+            <ng-container *ngIf="questions.length > 0">
+              <div class="alert alert-info rounded border-info my-2">
+                <ul class="list">
+                  <li>
+                    Each Question is timed, try to choose you answers before the
+                    time runs out.
+                  </li>
+                  <li>
+                    Once the time runs out your answer will be submitted
+                    automatically.
+                  </li>
+                </ul>
+              </div>
+            </ng-container>
+            <!-- Instructions -->
+
+            <div class="card card-rounded my-2">
+              <div class="card-body">
+                <div class="pb-2">
+                  <p>
+                    {{ question.question }}
+                  </p>
+                </div>
+                <hr class="socket" />
+
+                <ng-container
+                  *ngFor="let option of question.options; index as i"
+                >
+                  <div class="my-2 d-flex align-items-center">
+                    <span class="text-uppercase mr-2">
+                      {{ optionLabel(i) }}
+                    </span>
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="radio"
+                        name="options"
+                        id="option-{{ i }}"
+                        [value]="option.option"
+                        (change)="onSelectOption(option)"
+                      />
+                      <label class="form-check-label" for="option-{{ i }}">
+                        {{ option.option }}
+                      </label>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+              <div class="card-footer text-center px-5">
+                <button
+                  class="btn btn-success rounded btn-block"
+                  (click)="submit(question)"
+                  [disabled]="isSubmitting"
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </ng-container>
+        </ng-container>
+        <!-- Quiz -->
+      </div>
+      <div class="col-12 col-lg-5">
+        <ng-container *ngIf="quizId">
+          <div class="pb-2">
+            <h5 class="font-weight-bold">Results</h5>
+          </div>
+          <app-quiz-results [quizId]="quizId"></app-quiz-results>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</ng-container>
+<!-- Quiz Board -->
+
+<!-- Quiz Report -->
+<ng-container *ngIf="quiz && !quiz?.active">
+  <div class="container-lg py-3">
+    <div class="py-2 text-right">
+      <a routerLink="/student/dashboard" class="btn btn-warning rounded mx-1">
+        <i class="fas fa-th mr-2"></i>
+        Dashboard
+      </a>
+      <a routerLink="/student/results" class="btn btn-warning rounded mx-1">
+        <i class="fas fa-list-alt mr-2"></i>
+        Results
+      </a>
+    </div>
+    <app-quiz-report [quizId]="quiz.id"></app-quiz-report>
+  </div>
+</ng-container>
+<!-- Quiz Report -->

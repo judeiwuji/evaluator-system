@@ -1,0 +1,38 @@
+<div class="modal-header border-bottom-0 pb-1">
+    <h6 class="modal-title mb-0">
+        Topic
+    </h6>
+    <button class="close" (click)="close()">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+
+<div class="modal-body">
+    <!-- Form -->
+    <form [formGroup]="formData">
+        <div class="form-group">
+            <input type="text" class="form-control rounded" placeholder="Title" formControlName="title" maxlength="150">
+        </div>
+
+        <div class="form-group">
+            <textarea class="form-control rounded" placeholder="Description" formControlName="description" rows="2"
+                maxlength="300"></textarea>
+        </div>
+
+        <div class="form-group mt-2">
+            <ng-container *ngIf="!topic">
+                <button class="btn btn-block btn-success rounded" (click)="create()" [disabled]="formData.invalid">
+                    <i class="fas fa-plus mr-1"></i>
+                    Add
+                </button>
+            </ng-container>
+            <ng-container *ngIf="topic">
+                <button class="btn btn-block btn-success rounded" (click)="update()">
+                    Save Changes
+                    <i class="fas fa-check-circle ml-1"></i>
+                </button>
+            </ng-container>
+        </div>
+    </form>
+    <!-- Form -->
+</div>

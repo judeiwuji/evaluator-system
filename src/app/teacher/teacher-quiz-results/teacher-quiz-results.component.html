@@ -1,0 +1,53 @@
+<div class="d-flex">
+    <app-sidebar class="sidebar" [userType]="'teacher'" [activeTab]="'course'"></app-sidebar>
+    <div class="main-content">
+        <div class="p-2">
+            <div class="container">
+                <div class="py-2 text-right">
+                    <a routerLink="/teacher/manage/course/topic/quiz/{{quiz?.topicId}}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+                <div class="py-2" *ngIf="quiz">
+                    <div class="card card-rounded">
+                        <div class="card-body d-flex py-2">
+                            <h5 class="text-capitalize mb-0">
+                                {{quiz?.title}} Student Results
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between my-2 flex-wrap">
+                    <div class="my-1 ml-auto" [hidden]="isResultView">
+                        <button class="btn btn-secondary rounded" (click)="onBack()">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Results
+                        </button>
+                    </div>
+
+                    <div class="my-1 ml-auto" [hidden]="isReportView">
+                        <button class="btn btn-warning rounded" (click)="onGenerateReport()">
+                            Generate&nbsp;Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quiz Results -->
+                <ng-container *ngIf="isResultView">
+                    <div class="my-2">
+                        <app-quiz-results [quizId]="quizId"></app-quiz-results>
+                    </div>
+                </ng-container>
+                <!-- Quiz Results -->
+
+                <!-- Quiz Report -->
+                <ng-container *ngIf="isReportView">
+                    <div class="my-2">
+                        <app-quiz-report [quizId]="quizId"></app-quiz-report>
+                    </div>
+                </ng-container>
+                <!-- Quiz Report -->
+            </div>
+        </div>
+    </div>
+</div>

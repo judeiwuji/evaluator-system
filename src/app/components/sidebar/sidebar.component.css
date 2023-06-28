@@ -1,0 +1,60 @@
+.static-sidebar {
+  position: fixed;
+  width: 20%;
+  background-color: #fafafa;
+  min-height: 100vh;
+  max-height: 100vh;
+  color: #333;
+  box-shadow: 0.2em 0 0.1em #dcdcdc;
+}
+
+.static-sidebar .header {
+  font-size: 1.3rem;
+  font-weight: bold;
+  padding: 1.2rem 2rem;
+  font-family: "Concert One", sans-serif;
+}
+
+.static-sidebar .navbar-nav {
+  padding: 1rem;
+}
+
+.static-sidebar .navbar-nav li:not(.nav-label) {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+  border-radius: 0.75em !important;
+  transition: all 0.3s ease-in;
+}
+
+.static-sidebar .navbar-nav li a {
+  color: #333;
+  padding: 0.33rem 0.75rem;
+}
+
+.static-sidebar .navbar-nav li:not(.nav-label):hover,
+.static-sidebar .navbar-nav li a:hover,
+.static-sidebar .navbar-nav li a.active {
+  background-color: #333;
+  color: #eee;
+  border-radius: 0.75em !important;
+}
+
+.static-sidebar .nav-label {
+  color: #333;
+  font-weight: bold;
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+
+@media screen and (max-width: 876px) {
+  .static-sidebar {
+    width: 30%;
+  }
+}
+
+@media screen and (max-width: 595px) {
+  .static-sidebar {
+    width: 100%;
+    position: relative;
+  }
+}

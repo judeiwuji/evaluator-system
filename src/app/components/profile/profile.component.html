@@ -1,0 +1,125 @@
+<div class="row">
+    <!-- Profile -->
+    <div class="col-12 col-md-6 col-lg-7 mb-3 mb-md-0">
+        <div class="card card-rounded floating-avatar-container">
+            <div class="card-body">
+                <!-- Avatar -->
+                <div class="avatar-pane">
+                    <div class="floating-avatar">
+                        <span class="avatar">
+                            <img [src]="user?.avatar" *ngIf="user">
+                        </span>
+                        <div class="static-align-right-bottom-edge">
+                            <input type="file" (change)="uploadAvatar($event)" [hidden]="true" id="avatar">
+                            <label for="avatar" class="btn btn-circle">
+                                <i class="fas fa-camera"></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <!-- Avatar -->
+
+                <form [formGroup]="profileForm" (ngSubmit)="onSaveChanges()">
+                    <div class="form-group">
+                        <input type="text" class="form-control rounded" placeholder="Surname" formControlName="surname">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control rounded" placeholder="Othernames"
+                            formControlName="othernames">
+                    </div>
+                    <div class="form-group">
+                        <input type="email" class="form-control rounded" placeholder="email" formControlName="email">
+                    </div>
+                    <ng-container *ngIf="user?.student">
+                        <div class="form-group">
+                            <span class="form-control rounded bg-light disabled text-capitalized">
+                                {{user?.student?.regNo}}
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <span class="form-control rounded bg-light disabled">
+                                {{user?.student?.department?.name}}
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <span class="form-control rounded bg-light disabled">
+                                {{user?.student?.level?.name}}
+                            </span>
+                        </div>
+                    </ng-container>
+
+                    <ng-container *ngIf="user?.teacher">
+                        <div class="form-group">
+                            <span class="form-control rounded bg-light disabled">
+                                {{user?.teacher?.department.name}}
+                            </span>
+                        </div>
+                    </ng-container>
+
+                    <div class="form-group text-center mb-0">
+                        <button type="submit" class="btn btn-block btn-success">
+                            Save Changes
+                            <i class="fas fa-check-circle"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Profile -->
+
+    <!-- Change Password -->
+    <div class="col-12 col-md-6 col-lg-5 align-self-center">
+        <div class="card card-rounded">
+            <div class="card-header">
+                <h5 class="card-title">
+                    Change Password
+                </h5>
+            </div>
+            <div class="card-body">
+                <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()">
+                    <div class="form-group">
+                        <div class="d-flex align-items-center justify-content-between form-control rounded">
+                            <input type="text" placeholder="Old Password" formControlName="oldPassword">
+                            <span class="ml-1"
+                                *ngIf="pf['oldPassword'].touched && pf['oldPassword'].errors && pf['oldPassword'].errors['required']">
+                                <span ngbTooltip="Old password is required" [placement]="['bottom', 'auto']">
+                                    <i class="fas fa-exclamation-circle text-danger"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="d-flex align-items-center justify-content-between form-control rounded">
+                            <input type="text" placeholder="New Password" formControlName="newPassword">
+                            <span class="ml-1"
+                                *ngIf="pf['newPassword'].touched && pf['newPassword'].errors && pf['newPassword'].errors['required']">
+                                <span ngbTooltip="New password is required" [placement]="['bottom', 'auto']">
+                                    <i class="fas fa-exclamation-circle text-danger"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="d-flex align-items-center justify-content-between form-control rounded">
+                            <input type="text" placeholder="Confirm New Password" formControlName="confirmPassword">
+                            <span class="ml-1"
+                                *ngIf="pf['confirmPassword'].errors && pf['confirmPassword'].errors['matching']">
+                                <span ngbTooltip="Password mismatch" [placement]="['bottom', 'auto']">
+                                    <i class="fas fa-exclamation-circle text-danger"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-group text-center">
+                        <button type="submit" class="btn btn-block btn-success" [disabled]="passwordForm.invalid">
+                            Confirm
+                            <i class="fas fa-check-circle"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Change Password -->
+</div>

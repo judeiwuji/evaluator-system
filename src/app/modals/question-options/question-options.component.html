@@ -1,0 +1,77 @@
+<div class="modal-header border-bottom-0">
+    <h5 class="modal-heading">Options</h5>
+    <button class="close" (click)="close()">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+
+<div class="modal-body">
+    <div class="mb-2">
+        <h5>
+            {{question?.question}}
+        </h5>
+    </div>
+
+    <ng-container *ngFor="let option of question?.options; index as i;">
+        <div class="card card-rounded my-2">
+            <div class="card-body py-1">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div [ngClass]="{'w-100': option.isEditMode, 'w-90': !option.isEditMode}">
+                        <!-- Option  -->
+                        <p class="mb-0 d-flex align-items-center" *ngIf="!option.isEditMode">
+                            <span class="mr-2 static-circle">
+                                {{optionLabel(i)}}
+                            </span>
+                            <span>
+                                {{option.option}}
+                            </span>
+                        </p>
+                        <!-- Option -->
+
+                        <!-- Edit Mode -->
+                        <div *ngIf="option.isEditMode">
+                            <textarea class="form-control rounded" rows="1" #opt>{{option.option}}</textarea>
+                            <div class="text-right py-2">
+                                <button class="btn btn-sm btn-light rounded mr-2"
+                                    (click)="switchToEditMode(option, true)">
+                                    Cancel
+                                </button>
+                                <button class="btn btn-sm btn-success rounded" (click)="update(option, opt.value)">
+                                    Save changes
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Edit Mode -->
+                    </div>
+                    <div ngbDropdown class="align-self-start" *ngIf="!option.isEditMode">
+                        <button class="btn shadow-none hide-toggle" ngbDropdownToggle>
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div ngbDropdownMenu placement="bottom auto">
+                            <button ngbDropdownItem (click)="switchToEditMode(option)">
+                                <i class="fas fa-pen mr-2"></i>
+                                Edit
+                            </button>
+                            <button ngbDropdownItem (click)="deleteOption(option)">
+                                <i class="fas fa-trash-alt mr-2"></i>
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <div class="my-3">
+        <form [formGroup]="formData" (ngSubmit)="addOption()">
+            <div class="d-flex">
+                <textarea class="form-control rounded shadow-none" formControlName="option" rows="1"
+                    placeholder="Option"></textarea>
+                <button class="btn btn-light ml-1">
+                    Add
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

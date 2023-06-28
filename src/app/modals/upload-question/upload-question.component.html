@@ -1,0 +1,94 @@
+<div class="modal-header border-bottom-0">
+    <h5 class="modal-title">
+        Upload Question
+    </h5>
+    <button class="close" (click)="close()">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+<div class="modal-body">
+    <!-- Main View -->
+    <ng-container *ngIf="isMainView">
+        <div class="py-5">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6 mx-auto mb-3">
+                <div class="alert alert-info border-info rounded">
+                    <div class="d-flex">
+                        <span class="mr-2">
+                            <i class="fas fa-info-circle"></i>
+                        </span>
+                        <ul class="pl-3">
+                            <li>Click on <strong>browse</strong></li>
+                            <li>Browse through you file system through the Open Dialog Box</li>
+                            <li>Select the question file and click on open</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <input type="file" [hidden]="true" id="question-upload" (change)="addFile($event)"
+                    accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                <label for="question-upload" class="btn btn-warning rounded">
+                    <i class="fas fa-folder-open"></i>
+                    Browse
+                </label>
+            </div>
+        </div>
+    </ng-container>
+    <!-- Main View -->
+
+    <!-- Preview -->
+    <ng-container *ngIf="isPreview">
+        <div class="table-wrapper">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Score</th>
+                        <th>Timeout</th>
+                        <th>Question</th>
+                        <th>Answer</th>
+                        <th>OptionA</th>
+                        <th>OptionB</th>
+                        <th>OptionC</th>
+                        <th>OptionD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <ng-container *ngFor="let item of arrayList;index as i">
+                        <tr>
+                            <td>{{i+1}}.</td>
+                            <td>{{item.Score}}</td>
+                            <td>{{item.Timeout}}</td>
+                            <td style="width: 20em">{{item.Question}}</td>
+                            <td>{{item.Answer}}</td>
+                            <td>{{item?.OptionA}}</td>
+                            <td>{{item?.OptionB}}</td>
+                            <td>{{item?.OptionC}}</td>
+                            <td>{{item?.OptionD}}</td>
+                        </tr>
+                    </ng-container>
+                </tbody>
+            </table>
+        </div>
+    </ng-container>
+    <!-- Preview -->
+
+    <!-- Processing -->
+    <ng-container *ngIf="isProcessing">
+        <div class="text-center py-4">
+            <span>
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+            </span>
+            <p class="font-weight-bold py-3">
+                Processing
+            </p>
+        </div>
+    </ng-container>
+    <!-- Processing -->
+</div>
+
+<div class="modal-footer" *ngIf="isPreview">
+    <button class="btn btn-success rounded" (click)="onUploadQuestions()">
+        Upload Questions
+    </button>
+</div>

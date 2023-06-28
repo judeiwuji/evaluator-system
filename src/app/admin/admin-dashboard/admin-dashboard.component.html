@@ -1,0 +1,141 @@
+<div class="d-flex">
+    <app-sidebar class="sidebar" [userType]="'admin'" [activeTab]="'dashboard'"></app-sidebar>
+    <div class="main-content">
+        <app-navbar></app-navbar>
+        <div class="p-2">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12 col-sm-6 mb-2">
+                        <div class="card card-rounded summary-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-center">
+                                    <span class="mr-3">
+                                        <i class="fas fa-users-cog fa-3x text-info"></i>
+                                    </span>
+                                    <span>
+                                        <h4 class="mb-1">
+                                            {{dashboardStats.admins | number}}
+                                        </h4>
+                                        <span>Admins</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 mb-2">
+                        <div class="card card-rounded summary-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-center">
+                                    <span class="mr-3">
+                                        <i class="fas fa-user-friends fa-3x text-warning"></i>
+                                    </span>
+                                    <span>
+                                        <h4 class="mb-1">
+                                            {{dashboardStats.teachers | number}}
+                                        </h4>
+                                        <span>Teachers</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 mb-2">
+                        <div class="card card-rounded summary-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-center">
+                                    <span class="mr-3">
+                                        <i class="fas fa-user-graduate fa-3x text-danger"></i>
+                                    </span>
+                                    <span>
+                                        <h4 class="mb-1">
+                                            {{dashboardStats.students | number}}
+                                        </h4>
+                                        <span>Students</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 mb-2">
+                        <div class="card card-rounded summary-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-center">
+                                    <span class="mr-3">
+                                        <i class="fas fa-laptop-house fa-3x text-info"></i>
+                                    </span>
+                                    <span>
+                                        <h4 class="mb-1">
+                                            {{dashboardStats.departments | number}}
+                                        </h4>
+                                        <span>Departments</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activities -->
+                <div class="py-2">
+                    <div class="card card-rounded">
+                        <div class="card-header d-flex justify-content-between">
+                            <h5 class="card-title mb-0">
+                                Recent Activities
+                            </h5>
+
+                            <!-- Filter -->
+                            <span ngbDropdown placement="left right">
+                                <button class="btn btn-outline-secondary" ngbDropdownToggle>
+                                    {{selectedMonth.name}}
+                                </button>
+                                <div ngbDropdownMenu>
+                                    <ng-container *ngFor="let month of months;index as i">
+                                        <button ngbDropdownItem (click)="onFilterRecentActivities(i, month)">
+                                            {{month}}
+                                        </button>
+                                    </ng-container>
+                                </div>
+                            </span>
+                            <!-- Filter -->
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <ng-container *ngFor="let activity of activities">
+                                    <div class="col-12 col-sm-6 col-md-4 mb-2">
+                                        <div class="card card-rounded">
+                                            <div class="card-body">
+                                                {{activity.content}}
+                                            </div>
+                                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                                <span>
+                                                    {{activity.createdAt | date}}
+                                                </span>
+                                                <button class="btn" (click)="onDeleteActivity(activity)">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-container>
+
+                                <ng-container *ngIf="activities.length===0">
+                                    <div class="col-12 py-2 text-center">
+                                        <h5 class="mb-2">
+                                            <i class="fas fa-ban fa-2x"></i>
+                                        </h5>
+                                        <p>No recent activities.</p>
+                                    </div>
+                                </ng-container>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Activities -->
+            </div>
+        </div>
+
+        <app-footer></app-footer>
+    </div>
+</div>

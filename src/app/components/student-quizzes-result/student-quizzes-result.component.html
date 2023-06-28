@@ -1,0 +1,28 @@
+<div class="card card-rounded">
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="table table-hover table-bordered">
+                <thead>
+                    <tr>
+                        <td>#</td>
+                        <th>Course Code</th>
+                        <th>Topic</th>
+                        <th>Quiz</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <ng-container *ngFor="let result of results;index as i">
+                        <tr>
+                            <td>{{i+1}}.</td>
+                            <td class="text-uppercase">{{result.quiz.topic.course.code}}</td>
+                            <td class="text-capitalize">{{result.quiz.topic.title}}</td>
+                            <td class="text-capitalize">{{result.quiz.title}}</td>
+                            <td>{{result.score}}/{{result.totalScore}}</td>
+                        </tr>
+                    </ng-container>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

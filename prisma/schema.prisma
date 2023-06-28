@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id       Int       @id @default(autoincrement())
+  name     String    @db.VarChar(150)
+  students Student[]
+  teachers Teacher[]
+
+  createdAt DateTime
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Level {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(10)
+
+  students  Student[]
+  createdAt DateTime
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  surname       String         @db.VarChar(20)
+  othernames    String         @db.VarChar(40)
+  email         String         @unique @db.VarChar(60)
+  password      String         @db.Char(60)
+  type          String         @db.VarChar(10)
+  avatar        String         @default("./assets/imgs/avatar.png") @db.VarChar(300)
+  admin         Admin?
+  teacher       Teacher?
+  student       Student?
+  refreshTokens RefreshToken[]
+  activities    Activity[]
+
+  createdAt DateTime
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model RefreshToken {
+  id        String  @id @default(uuid())
+  token     String  @db.MediumText
+  userAgent String  @db.Text
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+  valid     Boolean @default(true)
+
+  createdAt DateTime
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Admin {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+}
+
+model Teacher {
+  id         Int        @id @default(autoincrement())
+  userId     Int        @unique
+  user       User       @relation(fields: [userId], references: [id])
+  deptId     Int
+  department Department @relation(fields: [deptId], references: [id])
+  courses    Course[]
+}
+
+model Student {
+  id         Int        @id @default(autoincrement())
+  userId     Int        @unique
+  user       User       @relation(fields: [userId], references: [id])
+  regNo      String     @db.VarChar(100)
+  levelId    Int
+  level      Level      @relation(fields: [levelId], references: [id])
+  deptId     Int
+  department Department @relation(fields: [deptId], references: [id])
+  answers    Answer[]
+}
+
+model Course {
+  id        Int     @id @default(autoincrement())
+  code      String  @unique @db.VarChar(10)
+  title     String  @unique @db.VarChar(150)
+  teacherId Int
+  teacher   Teacher @relation(fields: [teacherId], references: [id])
+  topics    Topic[]
+
+  createdAt DateTime
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Topic {
+  id          Int    @id @default(autoincrement())
+  title       String @db.VarChar(150)
+  description String @db.VarChar(300)
+  courseId    Int
+  course      Course @relation(fields: [courseId], references: [id])
+
+  createdAt DateTime
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  quiz      Quiz[]
+}
+
+model Quiz {
+  id        Int        @id @default(autoincrement())
+  token     String     @db.VarChar(15)
+  title     String
+  active    Boolean    @default(false)
+  topicId   Int
+  topic     Topic      @relation(fields: [topicId], references: [id])
+  questions Question[]
+  answers   Answer[]
+
+  createdAt DateTime
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Question {
+  id       Int      @id @default(autoincrement())
+  question String   @db.VarChar(300)
+  answer   String   @db.VarChar(300)
+  timeout  Int      @default(30)
+  score    Int      @default(1)
+  quizId   Int
+  quiz     Quiz     @relation(fields: [quizId], references: [id])
+  options  Option[]
+  answers  Answer[]
+
+  createdAt DateTime
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Option {
+  id         Int      @id @default(autoincrement())
+  option     String   @db.VarChar(300)
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id])
+}
+
+model Answer {
+  id         Int      @id @default(autoincrement())
+  questionId Int
+  Question   Question @relation(fields: [questionId], references: [id])
+  studentId  Int
+  student    Student  @relation(fields: [studentId], references: [id])
+  quizId     Int
+  quiz       Quiz     @relation(fields: [quizId], references: [id])
+  answer     String
+  score      Int
+
+  createdAt DateTime
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Activity {
+  id      Int    @id @default(autoincrement())
+  content String @db.VarChar(250)
+  userId  Int
+  user    User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}

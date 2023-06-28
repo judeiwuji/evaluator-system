@@ -1,0 +1,55 @@
+<div class="wrapper d-flex align-items-center justify-content-center">
+    <div class="col-12 col-sm-6 col-md-5 col-lg-4 col-xl-3 mx-auto login-pane">
+        <div class="text-center logo">
+            <span>
+                <i class="fas fa-infinity mr-1 text-warning"></i>
+            </span>
+            <span>Evaluator</span>
+        </div>
+        <div class="card card-rounded static-align-center">
+            <div class="card-header pb-2">
+                <h6 class="card-title mb-0">
+                    Log In | <a routerLink="/register">Register</a>
+                </h6>
+            </div>
+            <div class="card-body py-2">
+                <form [formGroup]="formData" (ngSubmit)="login()">
+                    <div class="form-group">
+                        <input type="email" class="form-control rounded shadow-none" formControlName="email"
+                            placeholder="Email">
+                    </div>
+                    <div class="form-group input-group">
+                        <input [type]="passwordType" class="form-control rounded-left shadow-none"
+                            formControlName="password" placeholder="Password">
+                        <span class="input-group-append">
+                            <button class="input-group-text rounded-right bg-white" type="button"
+                                (click)="togglePassword()">
+                                <span [hidden]="passwordType !== 'password'">
+                                    <i class="fas fa-eye"></i>
+                                </span>
+                                <span [hidden]="passwordType === 'password'">
+                                    <i class="fas fa-eye-slash"></i>
+                                </span>
+                            </button>
+                        </span>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-block btn-success rounded"
+                            [disabled]="fd['invalid'] || isProcessing">
+                            Log In
+                            <span *ngIf="isProcessing">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="form-group text-center">
+                        <a class="small" routerLink="/forgot/password">
+                            Forgot your password?
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<app-footer></app-footer>

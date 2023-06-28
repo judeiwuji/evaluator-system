@@ -1,0 +1,9 @@
+.timer-pane {
+  font-size: 1.4rem;
+  font-weight: bold;
+  box-shadow: 0 0.2em 0.3rem #eee;
+}
+
+.timer-pane span {
+  margin: 0 0.33rem;
+}

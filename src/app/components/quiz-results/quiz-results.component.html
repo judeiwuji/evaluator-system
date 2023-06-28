@@ -1,0 +1,47 @@
+<div class="card card-rounded">
+    <div class="card-body">
+
+        <!-- Loading -->
+        <div class="py-3 text-center" *ngIf="loading">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p>Please wait...</p>
+        </div>
+        <!-- Loading -->
+
+        <ng-container *ngFor="let result of quizResults; index as i;">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+                <div class="d-flex align-items-center">
+                    <span class="mr-2 mr-sm-3">
+                        {{i + 1}}.
+                    </span>
+
+                    <span>
+                        <span class="avatar-sm mr-3">
+                            <img [src]="result.student.user.avatar">
+                        </span>
+                    </span>
+                    <span class="text-capitalize font-weight-bold">
+                        {{result.student.user.surname}} {{result.student.user.othernames}}
+                    </span>
+                </div>
+
+                <!-- Score -->
+                <div class="ml-1">
+                    {{result.score}}/{{result.totalScore}}
+                </div>
+                <!-- Score -->
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="quizResults.length === 0 && firstTimeLoadComplete">
+            <div class="py-3 text-center">
+                <h5>
+                    <div class="fas fa-ban fa-2x"></div>
+                </h5>
+                <p>
+                    No record found.
+                </p>
+            </div>
+        </ng-container>
+    </div>
+</div>

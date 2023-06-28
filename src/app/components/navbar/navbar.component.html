@@ -1,0 +1,44 @@
+<nav class="navbar navbar-light bg-light" aria-expanded="false">
+    <div class="d-flex align-items-center">
+        <button class="btn mr-2 d-sm-none" (click)="onToggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a class="navbar-brand text-capitalize">{{navTab}}</a>
+    </div>
+
+    <div>
+        <ul class="navbar-nav mr-auto flex-row align-items-center">
+            <li class="nav-item mr-1">
+                <a class="nav-link" [ngbPopover]="popContent" placement="bottom auto" [autoClose]="'outside'">
+                    <span class="avatar-sm">
+                        <img [src]="user ?user.avatar : './assets/imgs/avatar.png'">
+                    </span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Popover -->
+<ng-template #popContent>
+    <div class="profile-popover">
+        <div>
+            <h5 class="heading">
+                {{user?.surname}} {{user?.othernames}}
+            </h5>
+            <p class="sub-heading">({{user?.email}})</p>
+        </div>
+        <div class="my-2">
+            <button class="btn btn-block btn-sm btn-danger" (click)="onLogout()">
+                <div class="d-flex justify-content-between">
+                    <span>
+                        Log Out
+                    </span>
+                    <span>
+                        <i class="fas fa-power-off"></i>
+                    </span>
+                </div>
+            </button>
+        </div>
+    </div>
+</ng-template>

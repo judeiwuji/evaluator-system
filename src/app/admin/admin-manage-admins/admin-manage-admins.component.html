@@ -1,0 +1,11 @@
+<div class="d-flex">
+    <app-sidebar class="sidebar" [userType]="'admin'" [activeTab]="'admin'"></app-sidebar>
+    <div class="main-content">
+        <app-navbar [navTab]="'Admins'"></app-navbar>
+        <div class="p-2">
+            <div class="container">
+                <app-admin-manager></app-admin-manager>
+            </div>
+        </div>
+    </div>
+</div>

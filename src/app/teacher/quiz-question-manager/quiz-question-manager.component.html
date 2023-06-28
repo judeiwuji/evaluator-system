@@ -1,0 +1,138 @@
+<div class="d-flex">
+    <app-sidebar class="sidebar" [userType]="'teacher'" [activeTab]="'course'"></app-sidebar>
+    <div class="main-content">
+        <div class="p-2">
+            <div class="container">
+
+                <div class="py-2 d-flex justify-content-between">
+                    <!-- Nav Track -->
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a routerLink="/teacher/dashboard/">Dashboard</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a routerLink="/teacher/manage/courses">Courses</a>
+                            </li>
+                            <li class="breadcrumb-item" aria-current="page">
+                                <a routerLink="/teacher/manage/course/topics/{{quiz?.topic?.courseId}}">
+                                    Topics
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item" aria-current="page">
+                                <a routerLink="/teacher/manage/course/topic/quiz/{{quiz?.topicId}}">
+                                    Quizzes
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">
+                                Questions
+                            </li>
+                        </ol>
+                    </nav>
+                    <!-- Nav Track -->
+
+                    <span>
+                        <a routerLink="/teacher/manage/course/topic/quiz/{{quiz?.topicId}}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </span>
+                </div>
+
+                <div class="py-2" *ngIf="quiz">
+                    <div class="card card-rounded">
+                        <div class="card-body d-flex py-2">
+                            <h5 class="text-capitalize mb-0">
+                                {{quiz?.title}} Questions
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between my-2 flex-wrap">
+                    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="my-1 w-xs-100">
+                        <input type="search" placeholder="Search" class="form-control rounded" formControlName="search">
+                    </form>
+
+                    <div class="my-1 ml-auto" ngbDropdown>
+                        <button class="btn btn-warning rounded" ngbDropdownToggle>
+                            New&nbsp;Question
+                        </button>
+                        <div ngbDropdownMenu>
+                            <button ngbDropdownItem (click)="onCreateNew()">
+                                <i class="fas fa-plus mr-2"></i>
+                                Add
+                            </button>
+                            <button ngbDropdownItem (click)="onUpload()">
+                                <i class="fas fa-cloud-upload-alt mr-2"></i>
+                                Upload
+                            </button>
+                            <a ngbDropdownItem href="./assets/templates/question.xlsx">
+                                <i class="fas fa-cloud-download-alt mr-2"></i>
+                                Download Template
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="my-2">
+                    <div class="card card-rounded">
+                        <div class="card-body">
+                            <div class="table-wrapper">
+                                <table class="table table-hover table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Question</th>
+                                            <th>Answer</th>
+                                            <th>Score</th>
+                                            <th>Timeout</th>
+                                            <th>Options</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <ng-container *ngFor="let question of questions; index as i;">
+                                            <tr>
+                                                <td>{{i+1}}</td>
+                                                <td style="width: 15em">{{question.question}}</td>
+                                                <td style="width: 15em">{{question.answer}}</td>
+                                                <td>{{question.score}}</td>
+                                                <td>{{question.timeout}}</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-info" (click)="onOptions(question)">
+                                                        Options&nbsp;({{question.options.length}})
+                                                    </button>
+                                                </td>
+                                                <td>
+                                                    <div ngbDropdown>
+                                                        <button ngbDropdownToggle class="btn btn-sm btn-info">
+                                                            More
+                                                        </button>
+                                                        <div ngbDropdownMenu placement="left auto">
+                                                            <button ngbDropdownItem (click)="onEdit(question)">
+                                                                <i class="fas fa-pen mr-2"></i>
+                                                                Edit
+                                                            </button>
+                                                            <button ngbDropdownItem (click)="onDelete(question)">
+                                                                <i class="fas fa-trash-alt mr-2"></i>
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </ng-container>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center" *ngIf="hasMore">
+                            <button class="btn btn-outline-info" (click)="loadData(++currentPage)">
+                                Load More
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

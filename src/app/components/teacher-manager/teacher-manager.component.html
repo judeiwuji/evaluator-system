@@ -1,0 +1,77 @@
+<div class="d-flex flex-wrap justify-content-between my-2">
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="w-xs-100 order-1 order-sm-0">
+        <input type="search" placeholder="Search" class="form-control rounded" formControlName="search">
+    </form>
+
+    <div class="w-xs-100 text-right order-0 order-sm-1 mb-2 mb-sm-0 ">
+        <button class="btn btn-warning rounded" (click)="onCreateNew()">
+            New&nbsp;Teacher
+        </button>
+    </div>
+</div>
+<div class="card card-rounded">
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="table table-hover table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Surname</th>
+                        <th>Othernames</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <ng-container *ngFor="let teacher of teachers; index as i;">
+                        <tr>
+                            <td>{{i+1}}.</td>
+                            <td class="text-capitalize">
+                                {{teacher.user.surname}}
+                            </td>
+                            <td class="text-capitalize">
+                                {{teacher.user.othernames}}
+                            </td>
+                            <td>{{teacher.user.email}}</td>
+                            <td class="text-capitalize">{{teacher.department?.name}}</td>
+                            <td>
+                                <div ngbDropdown [placement]="['bottom', 'auto']">
+                                    <button ngbDropdownToggle class="btn btn-sm btn-info">
+                                        More
+                                    </button>
+                                    <div ngbDropdownMenu>
+                                        <button ngbDropdownItem (click)="onProfile(teacher)">
+                                            <i class="fas fa-user mr-2"></i>
+                                            Profile
+                                        </button>
+                                        <button ngbDropdownItem (click)="onEdit(teacher)">
+                                            <i class="fas fa-pen mr-2"></i>
+                                            Edit
+                                        </button>
+                                        <button ngbDropdownItem (click)="onDelete(teacher)">
+                                            <i class="fas fa-trash-alt mr-2"></i>
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-container>
+                </tbody>
+            </table>
+
+            <!-- Loading -->
+            <div class="py-3 text-center" *ngIf="loading">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                <p>Please wait...</p>
+            </div>
+            <!-- Loading -->
+        </div>
+    </div>
+    <div class="card-footer text-center" *ngIf="hasMore">
+        <button class="btn btn-outline-info" (click)="loadData(++currentPage)">
+            Load More
+        </button>
+    </div>
+</div>

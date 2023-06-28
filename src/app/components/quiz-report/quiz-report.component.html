@@ -1,0 +1,64 @@
+<div class="mb-4">
+    <h5 class="font-weight-bold text-capitalize">
+        Chart on students' performance
+    </h5>
+
+    <div class="card card-rounded">
+        <div class="card-body">
+            <!-- Loading -->
+            <div class="py-3 text-center" *ngIf="generatingReport">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                <p>Please wait...</p>
+            </div>
+            <!-- Loading -->
+            <div class="chart" *ngIf="!generatingReport">
+                <canvas baseChart [datasets]="chart_Data" [labels]="chart_Labels" [options]="chart_Options"
+                    [plugins]="chart_Plugins" [legend]="chart_Legend" [type]="chart_Type">
+                </canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-3">
+    <h5 class="font-weight-bold text-capitalize">
+        Students' Ranking
+    </h5>
+
+    <div class="card card-rounded">
+        <div class="card-body">
+            <!-- Loading -->
+            <div class="py-3 text-center" *ngIf="loadingResults">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                <p>Please wait...</p>
+            </div>
+            <!-- Loading -->
+            <div class="table-wrapper" *ngIf="!loadingResults">
+                <table class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>RegNo</th>
+                            <th>Surname</th>
+                            <th>Othernames</th>
+                            <th>Score</th>
+                            <th>Position</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ng-container *ngFor="let result of quizResults;index as i;">
+                            <tr>
+                                <td>{{i+1}}</td>
+                                <td class="text-uppercase">{{result.student.regNo}}</td>
+                                <td class="text-capitalize">{{result.student.user.surname}}</td>
+                                <td class="text-capitalize">{{result.student.user.othernames}}</td>
+                                <td>{{result.score}}</td>
+                                <td>{{result.position}}</td>
+                            </tr>
+                        </ng-container>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

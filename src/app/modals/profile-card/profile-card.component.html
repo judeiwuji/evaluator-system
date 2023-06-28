@@ -1,0 +1,37 @@
+<div class="modal-header border-bottom-0">
+    <button class="close" (click)="close()">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+<div class="modal-body">
+    <div class="card border-0 profile-card">
+        <div class="card-body floating-avatar-container">
+            <div class="">
+                <div class="floating-avatar">
+                    <span class="avatar">
+                        <img [src]="user?.avatar">
+                    </span>
+                </div>
+            </div>
+
+            <div class="mb-3 text-center">
+                <h5 class="heading">{{user?.surname}} {{user?.othernames}}</h5>
+                <p class="sub-heading">
+                    (<a href="mailto:{{user?.email}}">{{user?.email}}</a>)
+                </p>
+            </div>
+
+            <div class="text-center text-capitalize text-muted my-2">
+                <h5 *ngIf="user?.student" class="mb-0">
+                    {{user?.student?.department?.name}}
+                </h5>
+                <h5 *ngIf="user?.teacher" class="mb-0">
+                    {{user?.teacher?.department?.name}}
+                </h5>
+                <p *ngIf="user?.student">
+                    {{user?.student?.level?.name}}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

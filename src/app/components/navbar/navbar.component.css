@@ -1,0 +1,16 @@
+.profile-popover {
+  min-width: 10em;
+}
+
+.profile-popover .heading {
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: capitalize;
+  margin-bottom: 0.1rem;
+}
+
+.profile-popover .sub-heading {
+  font-size: 0.8rem;
+  color: #333;
+  margin-bottom: 0.17rem;
+}

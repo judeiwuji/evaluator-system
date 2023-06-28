@@ -1,0 +1,43 @@
+<div class="modal-header border-bottom-0 pb-1">
+    <h6 class="modal-title mb-0">
+        Course
+    </h6>
+    <button class="close" (click)="close()">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+
+<div class="modal-body">
+    <!-- Form -->
+    <form [formGroup]="formData">
+        <div class="form-group">
+            <input type="text" class="form-control rounded" placeholder="Course Code" formControlName="code"
+                maxlength="10">
+        </div>
+
+        <div class="form-group">
+            <input type="text" class="form-control rounded" placeholder="Course Title" formControlName="title"
+                maxlength="150">
+        </div>
+
+        <div class="form-group mt-2">
+            <ng-container *ngIf="!course">
+                <button class="btn btn-block btn-success rounded" (click)="create()"
+                    [disabled]="formData.invalid || processing">
+                    <i class="fas fa-plus mr-1"></i>
+                    Add
+                    <span *ngIf="processing">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </span>
+                </button>
+            </ng-container>
+            <ng-container *ngIf="course">
+                <button class="btn btn-block btn-success rounded" (click)="update()" [disabled]="processing">
+                    Save Changes
+                    <i class="fas fa-check-circle ml-1"></i>
+                </button>
+            </ng-container>
+        </div>
+    </form>
+    <!-- Form -->
+</div>

@@ -1,0 +1,86 @@
+<div class="d-flex">
+    <app-sidebar class="sidebar" [userType]="'student'" [activeTab]="'quizzes'"></app-sidebar>
+    <div class="main-content">
+        <app-navbar [navTab]="'Quiz'"></app-navbar>
+        <div class="p-2">
+            <div class="container">
+                <div class="wrapper"
+                    [ngClass]="{'d-flex align-items-center justify-content-center': firstTimeLoadCompleted && quizzes.length === 0 }">
+                    <!-- No Data -->
+                    <ng-container *ngIf="firstTimeLoadCompleted && quizzes.length === 0">
+                        <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-4 mx-auto">
+                            <div class="alert alert-light rounded">
+                                <div class="text-center">
+                                    <i class="fas fa-ban fa-2x"></i>
+                                    <p class="mb-0 pt-3">No active quiz</p>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-container>
+                    <!-- No Data -->
+
+
+                    <div class="row">
+                        <!-- Quizzes -->
+                        <ng-container *ngFor="let quiz of quizzes">
+                            <div class="col-12 col-lg-6 mx-auto">
+                                <div class="card card-rounded mb-2 quiz-card">
+                                    <div class="card-header pb-1">
+                                        <div class="text-center">
+                                            <h4 class="text-uppercase font-weight-bold">
+                                                {{quiz.topic.course.code}}
+                                            </h4>
+                                            <h5 class="text-capitalize text-muted">
+                                                {{quiz.topic.course.title}}
+                                            </h5>
+                                        </div>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <div class="mb-3 pb-2">
+                                            <h6 class="font-weight-bold text-uppercase">Topic</h6>
+                                            <p class="text-capitalize mb-1">{{quiz.topic.title}}</p>
+                                            <p class="text-capitalize mb-1">
+                                                {{quiz.title}}
+                                            </p>
+                                        </div>
+
+                                        <div class="text-center">
+                                            <h6 class="font-weight-bold text-uppercase">
+                                                Lecturer
+                                            </h6>
+                                            <p class="text-capitalize">
+                                                {{quiz.topic.course.teacher.user.surname}},
+                                                {{quiz.topic.course.teacher.user.othernames}}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer text-center pt-1 px-3">
+                                        <button
+                                            class="btn btn-block btn-success rounded text-uppercase font-weight-bold"
+                                            (click)="onStartQuiz(quiz)">
+                                            Start Quiz
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </ng-container>
+                        <!-- Quizzes -->
+                        <!--Loading -->
+                        <div class="col-12 col-lg-6 mx-auto align-self-center" *ngIf="loading">
+                            <div class="text-center">
+                                <span>
+                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                </span>
+                                <p class="py-2">Loading...</p>
+                            </div>
+                        </div>
+                        <!-- Loading -->
+                    </div>
+                </div>
+                <!-- Footer -->
+                <app-footer></app-footer>
+                <!-- Footer -->
+            </div>
+        </div>
+    </div>
+</div>
