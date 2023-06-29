@@ -1,4 +1,3 @@
-import { User } from '@prisma/client';
 import { Request, Response } from 'express';
 import {
   CreateAdminRequest,
@@ -7,6 +6,7 @@ import {
 } from 'server/models/Admin.model';
 import { AppRequest } from 'server/models/App.model';
 import { Feedback } from 'server/models/Feedback.model';
+import User from 'server/models/User.model';
 import {
   CreateAdminSchema,
   DeleteAdminSchema,

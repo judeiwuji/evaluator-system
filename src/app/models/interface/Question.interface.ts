@@ -1,4 +1,4 @@
-import { Quiz } from '@prisma/client';
+import { Quiz } from './Quiz.interface';
 
 export interface CreateQuestionRequest {
   question: string;

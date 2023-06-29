@@ -1,5 +1,5 @@
-import { User } from '@prisma/client';
 import { Request } from 'express';
+import User from './User.model';
 
 export interface AppRequest extends Request {
   user?: User | null;

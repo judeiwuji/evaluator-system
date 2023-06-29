@@ -1,8 +1,11 @@
-import { Answer, PrismaClient, Question, Student, User } from '@prisma/client';
+import { Op } from 'sequelize';
+import Activity from 'server/models/Activity.model';
+import Answer from 'server/models/Answer.model';
 import { UserType } from 'server/models/Enums';
 import { Feedback } from 'server/models/Feedback.model';
+import Option, { OptionCreationAttributes } from 'server/models/Option';
 import Pagination from 'server/models/Pagination.model';
-import {
+import Question, {
   CreateQuestionOptionRequest,
   CreateQuestionRequest,
   DeleteQuestionOptionRequest,
@@ -12,46 +15,59 @@ import {
   UpdateQuestionRequest,
   UploadQuestionRequest,
 } from 'server/models/Question.model';
+import Student from 'server/models/Student.model';
+import User from 'server/models/User.model';
+import DB from 'server/models/engine/DBStorage';
 import { xlsxReader } from 'server/utils/xlsx.util';
-import prisma from '../utils/prisma.util';
 
 export const createQuestion = async (request: CreateQuestionRequest) => {
   let feedback: Feedback;
+  const transaction = await DB.transaction();
 
   try {
     feedback = new Feedback(true, 'success');
-    const { id } = await prisma.question.create({
-      data: {
+    const { id } = await Question.create(
+      {
         question: request.question,
         answer: request.answer,
         timeout: request.timeout,
         score: request.score,
         quizId: request.quizId,
-        options: {
-          createMany: { data: request.options.map((d) => ({ option: d })) },
-        },
-        createdAt: new Date(),
       },
-    });
-    feedback.result = await prisma.question.findFirst({
-      where: { id },
-      include: { options: true },
+      { transaction }
+    );
+
+    await Option.bulkCreate(
+      request.options.map((d) => ({ option: d, questionId: id })),
+      { transaction }
+    );
+
+    await transaction.commit();
+    feedback.result = await Question.findByPk(id, {
+      include: [Option],
     });
   } catch (error) {
+    await transaction.rollback();
     feedback = new Feedback(false, 'Operation failed');
     console.log(error);
   }
   return feedback;
 };
 
+const findQuestionBy = async (query: any) => {
+  const question = await Question.findOne({ where: query });
+
+  if (!question) {
+    throw new Error('Not found');
+  }
+  return question;
+};
+
 export const getQuestion = async (id: number) => {
   let feedback: Feedback;
   try {
     feedback = new Feedback(true, 'success');
-    feedback.result = await prisma.question.findFirst({
-      where: { id },
-      include: { options: true },
-    });
+    feedback.result = await findQuestionBy({ id });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
     console.log(error);
@@ -69,9 +85,9 @@ export const getQuestions = async (
 ) => {
   let feedback: Feedback;
   try {
-    let filter: any = { deletedAt: { equals: null }, quizId };
+    let filter: any = { quizId };
     if (search && search !== 'undefined') {
-      filter.question = { contains: search };
+      filter.question = { [Op.like]: `%${search}%` };
     }
 
     if (time > 0) {
@@ -81,26 +97,16 @@ export const getQuestions = async (
 
     const query: any = {
       where: filter,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        question: true,
-        score: user.type !== UserType.Student,
-        answer: user.type !== UserType.Student,
-        timeout: true,
-        options: true,
-        quiz: true,
-        quizId: true,
-        createdAt: true,
-      },
+      order: [['createdAt', 'desc']],
+      include: [{ model: Option }],
     };
 
     feedback = new Feedback(true, 'success');
     if (paginate) {
-      let totalPages = await prisma.question.count({ where: filter });
+      let totalPages = await Question.count({ where: filter });
       let pagination = new Pagination(page, 20, totalPages);
-      query.skip = pagination.skip;
-      query.take = pagination.take;
+      query.offset = pagination.skip;
+      query.limit = pagination.take;
       feedback.page = pagination.page;
       feedback.pages = pagination.totalPages;
     }
@@ -110,9 +116,9 @@ export const getQuestions = async (
       questions = (
         await Promise.all(
           (
-            await prisma.question.findMany(query)
+            await Question.findAll(query)
           ).map(async (d) => {
-            const answer = await prisma.answer.findFirst({
+            const answer = await Answer.findOne({
               where: { questionId: d.id, studentId: user.student.id },
             });
             return answer === null ? d : null;
@@ -121,7 +127,7 @@ export const getQuestions = async (
       ).filter((d) => d !== null);
       console.log(JSON.stringify(questions, null, 2));
     } else {
-      questions = await prisma.question.findMany(query);
+      questions = await Question.findAll(query);
     }
     feedback.results = questions;
   } catch (error) {
@@ -134,14 +140,12 @@ export const getQuestions = async (
 export const updateQuestion = async (request: UpdateQuestionRequest) => {
   let feedback: Feedback;
   try {
-    await prisma.question.update({
-      data: {
-        question: request.question,
-        answer: request.answer,
-        timeout: request.timeout,
-        score: request.score,
-      },
-      where: { id: Number(request.id) },
+    const question = await findQuestionBy({ id: Number(request.id) });
+    await question.update({
+      question: request.question,
+      answer: request.answer,
+      timeout: request.timeout,
+      score: request.score,
     });
     feedback = new Feedback(true, 'success');
   } catch (error) {
@@ -153,10 +157,8 @@ export const updateQuestion = async (request: UpdateQuestionRequest) => {
 export const deleteQuestion = async (request: DeleteQuestionRequest) => {
   let feedback: Feedback;
   try {
-    await prisma.question.update({
-      data: { deletedAt: new Date() },
-      where: { id: Number(request.id) },
-    });
+    const question = await findQuestionBy({ id: Number(request.id) });
+    await question.destroy();
     feedback = new Feedback(true, 'success');
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
@@ -171,20 +173,15 @@ export const createQuestionOption = async (
   let feedback: Feedback;
   try {
     feedback = new Feedback(true, 'success');
-    const newQuestion = await prisma.option.create({
-      data: {
-        option: request.option,
-        questionId: request.questionId,
-      },
+    const newQuestion = await Option.create({
+      option: request.option,
+      questionId: request.questionId,
     });
     feedback.result = newQuestion;
     // Track Activity
-    await prisma.activity.create({
-      data: {
-        userId: user.id,
-        content: `added new question record'`,
-        createdAt: new Date(),
-      },
+    await Activity.create({
+      userId: user.id,
+      content: `added new option to question'`,
     });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
@@ -198,20 +195,20 @@ export const updateQuestionOption = async (
 ) => {
   let feedback: Feedback;
   try {
-    const updated = await prisma.option.update({
-      data: {
+    const updated = await Option.update(
+      {
         option: request.option,
       },
-      where: { id: Number(request.id) },
-    });
+      {
+        where: { id: Number(request.id) },
+      }
+    );
     feedback = new Feedback(true, 'success');
+
     // Track Activity
-    await prisma.activity.create({
-      data: {
-        userId: user.id,
-        content: `updated question (${updated.id}) record'`,
-        createdAt: new Date(),
-      },
+    await Activity.create({
+      userId: user.id,
+      content: `updated question (${request.id}) option record'`,
     });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
@@ -225,17 +222,14 @@ export const deleteQuestionOption = async (
 ) => {
   let feedback: Feedback;
   try {
-    const deleted = await prisma.option.delete({
+    await Option.destroy({
       where: { id: Number(request.id) },
     });
     feedback = new Feedback(true, 'success');
     // Track Activity
-    await prisma.activity.create({
-      data: {
-        userId: user.id,
-        content: `deleted question (${deleted.id}) record'`,
-        createdAt: new Date(),
-      },
+    await Activity.create({
+      userId: user.id,
+      content: `deleted question (${request.id}) option record'`,
     });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
@@ -251,11 +245,14 @@ export const processQuestionUpload = async (
   ];
   const feedback = new Feedback(true, 'success');
   feedback.errors = [];
+
   await Promise.all(
     rawData.map(async (d) => {
+      const transaction = await DB.transaction();
       try {
-        const alreadyExists = await prisma.question.findFirst({
+        const alreadyExists = await Question.findOne({
           where: { quizId: Number(request.quizId), question: d.Question },
+          transaction,
         });
 
         if (alreadyExists) {
@@ -265,33 +262,36 @@ export const processQuestionUpload = async (
             `Failed to add "${d.Question}" because it already exists.`
           );
         } else {
-          const options: { option: string }[] = [];
-          d.OptionA !== undefined
-            ? options.push({ option: `${d.OptionA}` })
-            : null;
-          d.OptionB !== undefined
-            ? options.push({ option: `${d.OptionB}` })
-            : null;
-          d.OptionC !== undefined
-            ? options.push({ option: `${d.OptionC}` })
-            : null;
-          d.OptionD !== undefined
-            ? options.push({ option: `${d.OptionD}` })
-            : null;
-
-          await prisma.question.create({
-            data: {
+          const { id } = await Question.create(
+            {
               question: d.Question,
               answer: `${d.Answer}`,
               score: d.Score,
               timeout: d.Timeout,
-              options: { createMany: { data: options } },
               quizId: Number(request.quizId),
-              createdAt: new Date(),
             },
-          });
+            { transaction }
+          );
+
+          const options: OptionCreationAttributes[] = [];
+          d.OptionA !== undefined
+            ? options.push({ option: `${d.OptionA}`, questionId: id })
+            : null;
+          d.OptionB !== undefined
+            ? options.push({ option: `${d.OptionB}`, questionId: id })
+            : null;
+          d.OptionC !== undefined
+            ? options.push({ option: `${d.OptionC}`, questionId: id })
+            : null;
+          d.OptionD !== undefined
+            ? options.push({ option: `${d.OptionD}`, questionId: id })
+            : null;
+
+          await Option.bulkCreate(options, { transaction });
         }
+        await transaction.commit();
       } catch (error) {
+        await transaction.rollback();
         console.log(error);
         feedback.success = false;
         feedback.message = 'Operation failed';

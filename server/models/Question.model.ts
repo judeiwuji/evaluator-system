@@ -1,3 +1,16 @@
+import {
+  DataType,
+  Model,
+  Column,
+  ForeignKey,
+  BelongsTo,
+  HasMany,
+  Table,
+} from 'sequelize-typescript';
+import Quiz from './Quiz.model';
+import Option from './Option';
+import { Optional } from 'sequelize';
+
 export class CreateQuestionRequest {
   constructor(
     public question: string,
@@ -51,4 +64,46 @@ export class UploadQuestionRequest {
     public OptionC?: string,
     public OptionD?: string
   ) {}
+}
+
+export interface QuestionAttributes {
+  id: number;
+  question: string;
+  answer: string;
+  timeout: number;
+  score: number;
+  quizId: number;
+  quiz: Quiz;
+  options: Option[];
+}
+
+export interface QuestionCreationAttributes
+  extends Optional<QuestionAttributes, 'id' | 'quiz' | 'options'> {}
+
+@Table
+export default class Question extends Model<
+  QuestionAttributes,
+  QuestionCreationAttributes
+> {
+  @Column(DataType.STRING(300))
+  question!: string;
+
+  @Column(DataType.STRING(300))
+  answer!: string;
+
+  @Column({ type: DataType.INTEGER, defaultValue: 30 })
+  timeout!: number;
+
+  @Column({ type: DataType.INTEGER, defaultValue: 1 })
+  score!: number;
+
+  @ForeignKey(() => Quiz)
+  @Column(DataType.INTEGER)
+  quizId!: number;
+
+  @BelongsTo(() => Quiz)
+  quiz!: Quiz;
+
+  @HasMany(() => Option)
+  options!: Option[];
 }

@@ -3,6 +3,7 @@ import {
   changePasswordController,
   currentUserController,
   getLevelsController,
+  installAppController,
   loginController,
   logoutController,
   resetPasswordController,
@@ -29,5 +30,6 @@ export default class AppRoute {
       currentUserController
     );
     this.app.get('/api/levels', getLevelsController);
+    this.app.post('/api/install/', installAppController);
   }
 }

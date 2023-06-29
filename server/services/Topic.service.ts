@@ -1,21 +1,21 @@
-import { PrismaClient, User } from '@prisma/client';
+import { Op } from 'sequelize';
+import Activity from 'server/models/Activity.model';
 import { Feedback } from 'server/models/Feedback.model';
 import Pagination from 'server/models/Pagination.model';
-import {
+import Topic, {
   CreateTopicRequest,
   DeleteTopicRequest,
   UpdateTopicRequest,
 } from 'server/models/Topic.model';
-import prisma from '../utils/prisma.util';
+import User from 'server/models/User.model';
 
 export const createTopic = async (request: CreateTopicRequest, user: User) => {
   let feedback: Feedback;
   try {
-    const titleExists = await prisma.topic.findFirst({
+    const titleExists = await Topic.findOne({
       where: {
         title: request.title,
         courseId: request.courseId,
-        deletedAt: { equals: null },
       },
     });
 
@@ -23,22 +23,16 @@ export const createTopic = async (request: CreateTopicRequest, user: User) => {
       feedback = new Feedback(false, 'Topic already exists in this course');
     } else {
       feedback = new Feedback(true, 'success');
-      feedback.result = await prisma.topic.create({
-        data: {
-          title: request.title,
-          description: request.description,
-          courseId: request.courseId,
-          createdAt: new Date(),
-        },
+      feedback.result = await Topic.create({
+        title: request.title,
+        description: request.description,
+        courseId: request.courseId,
       });
 
       // Track Activity
-      await prisma.activity.create({
-        data: {
-          userId: user.id,
-          content: `Added new topic (${feedback.result.id}) record`,
-          createdAt: new Date(),
-        },
+      await Activity.create({
+        userId: user.id,
+        content: `Added new topic (${feedback.result.id}) record`,
       });
     }
   } catch (error) {
@@ -48,11 +42,22 @@ export const createTopic = async (request: CreateTopicRequest, user: User) => {
   return feedback;
 };
 
+const findTopicBy = async (query: any) => {
+  const topic = await Topic.findOne({
+    where: query,
+  });
+
+  if (!topic) {
+    throw new Error('Not found');
+  }
+  return topic;
+};
+
 export const getTopic = async (id: number) => {
   let feedback: Feedback;
   try {
     feedback = new Feedback(true, 'success');
-    feedback.result = await prisma.topic.findFirst({ where: { id } });
+    feedback.result = await findTopicBy({ id });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
     console.log(error);
@@ -67,18 +72,18 @@ export const getTopics = async (
 ) => {
   let feedback: Feedback;
   try {
-    let filter: any = { deletedAt: { equals: null }, courseId };
+    let filter: any = { courseId };
     if (search && search !== 'undefined') {
-      filter.title = { contains: search };
+      filter.title = { [Op.like]: `%${search}%` };
     }
-    let totalPages = await prisma.topic.count({ where: filter });
+    let totalPages = await Topic.count({ where: filter });
     let pagination = new Pagination(page, 20, totalPages);
     feedback = new Feedback(true, 'success');
-    feedback.results = await prisma.topic.findMany({
+    feedback.results = await Topic.findAll({
       where: filter,
-      skip: pagination.skip,
-      take: pagination.take,
-      orderBy: { createdAt: 'desc' },
+      offset: pagination.skip,
+      limit: pagination.take,
+      order: [['createdAt', 'desc']],
     });
     feedback.page = pagination.page;
     feedback.pages = pagination.totalPages;
@@ -92,18 +97,17 @@ export const getTopics = async (
 export const updateTopic = async (request: UpdateTopicRequest, user: User) => {
   let feedback: Feedback;
   try {
-    await prisma.topic.update({
-      data: { title: request.title, description: request.description },
-      where: { id: Number(request.id) },
-    });
+    await Topic.update(
+      { title: request.title, description: request.description },
+      {
+        where: { id: Number(request.id) },
+      }
+    );
     feedback = new Feedback(true, 'success');
     // Track Activity
-    await prisma.activity.create({
-      data: {
-        userId: user.id,
-        content: `Updated topic (${request.id}) record`,
-        createdAt: new Date(),
-      },
+    await Activity.create({
+      userId: user.id,
+      content: `Updated topic (${request.id}) record`,
     });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
@@ -114,18 +118,13 @@ export const updateTopic = async (request: UpdateTopicRequest, user: User) => {
 export const deleteTopic = async (request: DeleteTopicRequest, user: User) => {
   let feedback: Feedback;
   try {
-    await prisma.topic.update({
-      data: { deletedAt: new Date() },
-      where: { id: Number(request.id) },
-    });
+    const topic = await findTopicBy({ id: Number(request.id) });
+    await topic.destroy();
     feedback = new Feedback(true, 'success');
     // Track Activity
-    await prisma.activity.create({
-      data: {
-        userId: user.id,
-        content: `Deleted topic (${request.id}) record`,
-        createdAt: new Date(),
-      },
+    await Activity.create({
+      userId: user.id,
+      content: `Deleted topic (${request.id}) record`,
     });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');

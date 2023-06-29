@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import { compareSync, genSaltSync, hashSync } from 'bcryptjs';
 import {
   ChangePasswordRequest,
@@ -9,7 +8,12 @@ import {
 import { Feedback } from 'server/models/Feedback.model';
 import { signToken } from 'server/utils/jwt.util';
 import * as crypto from 'crypto';
-import prisma from '../utils/prisma.util';
+import RefreshToken from 'server/models/RefreshToken';
+import User from 'server/models/User.model';
+import Activity from 'server/models/Activity.model';
+import Level from 'server/models/Level.model';
+import DB from 'server/models/engine/DBStorage';
+import Admin from 'server/models/Admin.model';
 
 const ACCESS_TOKEN_TIMEOUT = process.env['ACCESS_TOKEN_TIMEOUT'] as string;
 const REFRESH_TOKEN_TIMEOUT = process.env['REFRESH_TOKEN_TIMEOUT'] as string;
@@ -17,13 +21,10 @@ const SALT_ROUND = Number(process.env['SALT_ROUND']);
 
 export const createAccessToken = async (request: CreateAccesTokenRequest) => {
   const token = signToken({ user: request.userId }, REFRESH_TOKEN_TIMEOUT);
-  const refreshToken = await prisma.refreshToken.create({
-    data: {
-      token,
-      userId: request.userId,
-      userAgent: request.userAgent,
-      createdAt: new Date(),
-    },
+  const refreshToken = await RefreshToken.create({
+    token,
+    userId: request.userId,
+    userAgent: request.userAgent,
   });
 
   const accessToken = `Bearer ${signToken(
@@ -43,10 +44,12 @@ export const refreshAccessToken = async (
   let accessToken: string;
   try {
     const token = signToken({ userId: request.userId }, REFRESH_TOKEN_TIMEOUT);
-    await prisma.refreshToken.update({
-      data: { token },
-      where: { id: request.id },
-    });
+    await RefreshToken.update(
+      {
+        token,
+      },
+      { where: { id: request.id } }
+    );
     accessToken = `Bearer ${signToken(
       { token: request.id, user: request.userId, type: request.userType },
       ACCESS_TOKEN_TIMEOUT
@@ -62,8 +65,7 @@ export const refreshAccessToken = async (
 export const logout = async (id: string) => {
   let feedback: Feedback;
   try {
-    await prisma.refreshToken.update({
-      data: { valid: false },
+    await RefreshToken.destroy({
       where: { id },
     });
     feedback = new Feedback(true, 'success');
@@ -75,7 +77,7 @@ export const logout = async (id: string) => {
 };
 
 export const getRefreshToken = async (filter: any) => {
-  return await prisma.refreshToken.findFirst({ where: filter });
+  return await RefreshToken.findOne({ where: filter });
 };
 
 export const changePassword = async (
@@ -84,23 +86,22 @@ export const changePassword = async (
 ) => {
   let feedback: Feedback;
   try {
-    const user = await prisma.user.findFirst({ where: { id: userId } });
+    const user = await User.findOne({ where: { id: userId } });
     const isMatch = compareSync(request.oldPassword, user?.password as string);
     if (isMatch) {
       const salt = genSaltSync(SALT_ROUND);
       const hash = hashSync(request.newPassword, salt);
-      await prisma.user.update({
-        data: { password: hash },
-        where: { id: userId },
-      });
+      await User.update(
+        {
+          password: hash,
+        },
+        { where: { id: userId } }
+      );
       feedback = new Feedback(true, 'success');
       // Track Activity
-      await prisma.activity.create({
-        data: {
-          userId: userId,
-          content: `changed password`,
-          createdAt: new Date(),
-        },
+      await Activity.create({
+        userId: userId,
+        content: `changed password`,
       });
     } else {
       feedback = new Feedback(false, 'Incorrect old password.');
@@ -115,17 +116,19 @@ export const changePassword = async (
 export const resetPassword = async (request: ResetPasswordRequest) => {
   let feedback: Feedback;
   try {
-    const user = await prisma.user.findFirst({
+    const user = await User.findOne({
       where: { email: request.email },
     });
     if (user) {
       const password = crypto.randomBytes(6).toString('hex').substring(0, 5);
       const salt = genSaltSync(SALT_ROUND);
       const hash = hashSync(password, salt);
-      await prisma.user.update({
-        data: { password: hash },
-        where: { id: user.id },
-      });
+      await User.update(
+        {
+          password: hash,
+        },
+        { where: { id: user.id } }
+      );
       feedback = new Feedback(true, 'success');
       feedback.result = password;
     } else {
@@ -142,10 +145,48 @@ export const getLevels = async () => {
   let feedback: Feedback;
   try {
     feedback = new Feedback(true, 'success');
-    feedback.results = await prisma.level.findMany();
+    feedback.results = await Level.findAll();
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
     console.log(error);
+  }
+  return feedback;
+};
+
+export const installApp = async () => {
+  const salt = genSaltSync(SALT_ROUND);
+  const hash = hashSync('admin', salt);
+  const transaction = await DB.transaction();
+  let feedback: Feedback;
+
+  try {
+    const adminExists = await Admin.findOne({});
+
+    if (adminExists) {
+      throw new Error('App already installed');
+    }
+    const user = await User.create(
+      {
+        surname: 'admin',
+        othernames: 'admin',
+        password: hash,
+        email: 'admin@app.com',
+        type: 'admin',
+      },
+      { transaction }
+    );
+
+    await Admin.create({ userId: user.id }, { transaction });
+    await Level.bulkCreate(
+      [{ name: 'ND1' }, { name: 'ND2' }, { name: 'HND1' }, { name: 'HND2' }],
+      { transaction }
+    );
+
+    await transaction.commit();
+    feedback = new Feedback(true, 'installed');
+  } catch (error: any) {
+    await transaction.commit();
+    feedback = new Feedback(false, error.message);
   }
   return feedback;
 };

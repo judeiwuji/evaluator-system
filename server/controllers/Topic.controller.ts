@@ -1,4 +1,3 @@
-import { User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { AppRequest } from 'server/models/App.model';
 import { Feedback } from 'server/models/Feedback.model';
@@ -12,6 +11,7 @@ import {
   DeleteTopicRequest,
   UpdateTopicRequest,
 } from 'server/models/Topic.model';
+import User from 'server/models/User.model';
 import {
   createTopic,
   deleteTopic,

@@ -1,14 +1,24 @@
-import { PrismaClient, User } from '@prisma/client';
 import { UserType } from 'server/models/Enums';
 import { Feedback } from 'server/models/Feedback.model';
 import * as bcrypt from 'bcryptjs';
 import Pagination from 'server/models/Pagination.model';
-import {
+import Student, {
   CreateStudentRequest,
   DeleteStudentRequest,
   UpdateStudentRequest,
 } from 'server/models/Student.model';
-import prisma from '../utils/prisma.util';
+import User from 'server/models/User.model';
+import DB from 'server/models/engine/DBStorage';
+import Activity from 'server/models/Activity.model';
+import UserDTO from 'server/models/DTOs/UserDTO';
+import Department from 'server/models/Department.model';
+import Level from 'server/models/Level.model';
+import { Op } from 'sequelize';
+import Answer from 'server/models/Answer.model';
+import Question from 'server/models/Question.model';
+import Quiz from 'server/models/Quiz.model';
+import Topic from 'server/models/Topic.model';
+import Course from 'server/models/Course.model';
 
 const SALT_ROUND = Number(process.env['SALT_ROUND']);
 
@@ -17,13 +27,17 @@ export const createStudent = async (
   user: User
 ) => {
   let feedback: Feedback;
+  const transaction = await DB.transaction();
+
   try {
-    const emailExists = await prisma.user.findFirst({
+    const emailExists = await User.findOne({
       where: { email: request.email },
+      transaction,
     });
 
-    const regNoExists = await prisma.student.findFirst({
+    const regNoExists = await Student.findOne({
       where: { regNo: request.regNo },
+      transaction,
     });
 
     if (emailExists) {
@@ -33,82 +47,66 @@ export const createStudent = async (
     } else {
       const salt = bcrypt.genSaltSync(SALT_ROUND);
       const hash = bcrypt.hashSync(request.password, salt);
-      const student = await prisma.user.create({
-        data: {
+
+      const newUser = await User.create(
+        {
           surname: request.surname,
           othernames: request.othernames,
           email: request.email,
           password: hash,
           type: UserType.Student,
-          createdAt: new Date(),
-          student: {
-            create: {
-              regNo: request.regNo,
-              deptId: Number(request.deptId),
-              levelId: Number(request.levelId),
-            },
-          },
         },
-      });
+        { transaction }
+      );
 
-      feedback = new Feedback(true, 'success');
-      const newStudent = await prisma.student.findFirst({
-        where: { userId: student.id },
-        include: {
-          user: {
-            select: {
-              surname: true,
-              othernames: true,
-              email: true,
-              avatar: true,
-              type: true,
-            },
-          },
-          department: true,
-          level: true,
+      const userStudent = await Student.create(
+        {
+          userId: newUser.id,
+          regNo: request.regNo,
+          deptId: Number(request.deptId),
+          levelId: Number(request.levelId),
         },
+        { transaction }
+      );
+
+      await Activity.create({
+        userId: user.id,
+        content: `Added new student '${newUser.surname} ${newUser.othernames}' record'`,
+      });
+      await transaction.commit();
+      feedback = new Feedback(true, 'success');
+      const newStudent = await Student.findOne({
+        where: { userId: newUser.id },
+        include: [{ model: User, attributes: UserDTO }, Department, Level],
       });
 
       feedback.result = newStudent;
-
-      // Track Activity
-      if (user) {
-        await prisma.activity.create({
-          data: {
-            userId: user.id,
-            content: `Added new student '${newStudent?.user.surname} ${newStudent?.user.othernames}' record'`,
-            createdAt: new Date(),
-          },
-        });
-      }
     }
   } catch (error) {
+    await transaction.rollback();
     console.log(error);
     feedback = new Feedback(false, 'Failed to create account');
   }
   return feedback;
 };
 
+const findStudentBy = async (query: any) => {
+  const user = await Student.findOne({
+    where: query,
+    include: [{ model: User, attributes: UserDTO }, Department, Level],
+  });
+
+  if (!user) {
+    throw new Error('Not found');
+  }
+  return user;
+};
+
 export const getStudent = async (id: number) => {
   let feedback: Feedback;
   try {
     feedback = new Feedback(true, 'success');
-    feedback.result = await prisma.student.findFirst({
-      where: { id, user: { deletedAt: { equals: null } } },
-      include: {
-        user: {
-          select: {
-            surname: true,
-            othernames: true,
-            avatar: true,
-            email: true,
-            type: true,
-          },
-        },
-        department: true,
-        level: true,
-      },
-    });
+    feedback.result = await findStudentBy({ id });
   } catch (error) {
     console.log(error);
     feedback = new Feedback(false, 'Operation failed');
@@ -119,46 +117,47 @@ export const getStudent = async (id: number) => {
 export const getStudents = async (page: number, search?: string) => {
   let feedback: Feedback;
   try {
-    let filter: any = { user: { deletedAt: { equals: null } } };
+    let filter: any = {};
+    let userFilter: any = {};
+
     if (search && search !== 'undefined') {
-      filter.OR = [
-        { regNo: { contains: search } },
-        {
-          user: {
-            OR: [
-              { surname: { contains: search } },
-              { othernames: { contains: search } },
-            ],
-          },
-        },
-      ];
+      // filter[Op.or] = [{ regNo: { [Op.like]: `${search}` } }];
+      userFilter = {
+        [Op.or]: [
+          { surname: { [Op.like]: `%${search}%` } },
+          { othernames: { [Op.like]: `%${search}%` } },
+        ],
+      };
     }
 
-    let totalPages = await prisma.student.count({
+    let totalPages = await Student.count({
       where: filter,
+      include: [
+        {
+          model: User,
+          attributes: UserDTO,
+          order: [['surname', 'ASC']],
+          where: userFilter,
+        },
+      ],
     });
     let pagination = new Pagination(page, 10, totalPages);
 
     feedback = new Feedback(true, 'success');
-    feedback.results = await prisma.student.findMany({
+    feedback.results = await Student.findAll({
       where: filter,
-      skip: pagination.skip,
-      take: pagination.take,
-      include: {
-        user: {
-          select: {
-            surname: true,
-            othernames: true,
-            email: true,
-            avatar: true,
-            id: true,
-            type: true,
-          },
+      offset: pagination.skip,
+      limit: pagination.take,
+      include: [
+        {
+          model: User,
+          attributes: UserDTO,
+          order: [['surname', 'ASC']],
+          where: userFilter,
         },
-        department: true,
-        level: true,
-      },
-      orderBy: { user: { surname: 'asc' } },
+        Department,
+        Level,
+      ],
     });
     feedback.page = pagination.page;
     feedback.pages = pagination.totalPages;
@@ -185,34 +184,28 @@ export const updateStudent = async (
       ? Number(request.levelId)
       : request.levelId;
     request.deptId = request.deptId ? Number(request.deptId) : request.deptId;
-    const student = await prisma.student.findFirst({
-      where: { id: request.id },
-    });
+    const student = await findStudentBy({ id: request.id });
 
-    await prisma.user.update({
-      data: {
+    await User.update(
+      {
         surname: request.surname,
         othernames: request.othernames,
         password: hash,
-        student: {
-          update: {
-            regNo: request.regNo,
-            levelId: request.levelId,
-            deptId: request.deptId,
-          },
-        },
       },
-      where: { id: student?.userId },
+      { where: { id: student?.userId } }
+    );
+
+    await student.update({
+      regNo: request.regNo,
+      levelId: request.levelId,
+      deptId: request.deptId,
     });
 
     feedback = new Feedback(true, 'success');
     // Track Activity
-    await prisma.activity.create({
-      data: {
-        userId: user.id,
-        content: `Updated student '${request.id}' record'`,
-        createdAt: new Date(),
-      },
+    await Activity.create({
+      userId: user.id,
+      content: `Updated student '${request.id}' record'`,
     });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
@@ -227,18 +220,13 @@ export const deleteStudent = async (
 ) => {
   let feedback: Feedback;
   try {
-    await prisma.student.update({
-      data: { user: { update: { deletedAt: new Date() } } },
-      where: { id: Number(request.id) },
-    });
+    const student = await findStudentBy({ id: Number(request.id) });
     feedback = new Feedback(true, 'success');
+
     // Track Activity
-    await prisma.activity.create({
-      data: {
-        userId: user.id,
-        content: `Deleted student '${request.id}' record'`,
-        createdAt: new Date(),
-      },
+    await Activity.create({
+      userId: user.id,
+      content: `Deleted student '${request.id}' record'`,
     });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
@@ -255,31 +243,21 @@ export const getStudentQuizResult = async (
   let feedback: Feedback;
   try {
     feedback = new Feedback(true, 'success');
-    const result = await prisma.answer.aggregate({
-      _sum: { score: true },
+    const result: { score: number } = await Answer.aggregate('score', 'sum', {
       where: { studentId, quizId },
     });
-    const quizScore = await prisma.question.aggregate({
-      _sum: { score: true },
-      where: { quizId },
-    });
-    const student = await prisma.student.findFirst({
-      where: { id: studentId },
-      include: {
-        user: {
-          select: {
-            surname: true,
-            othernames: true,
-            avatar: true,
-            email: true,
-            type: true,
-          },
-        },
-      },
-    });
+    const quizScore: { score: number } = await Question.aggregate(
+      'score',
+      'sum',
+      {
+        where: { quizId },
+      }
+    );
+
+    const student = await findStudentBy({ id: studentId });
     feedback.result = {
-      score: result._sum.score,
-      totalScore: quizScore._sum.score,
+      score: result.score,
+      totalScore: quizScore.score,
       student,
     };
   } catch (error) {
@@ -296,25 +274,28 @@ export const getStudentQuizzesResult = async (studentId: number) => {
     feedback = new Feedback(true, 'success');
     const results = await Promise.all(
       (
-        await prisma.answer.groupBy({
-          by: ['studentId', 'quizId'],
-          _sum: { score: true },
+        await Answer.findAll({
+          group: ['studentId', 'quizId'],
+          attributes: [[DB.fn('sum', DB.col('score')), 'score']],
           where: { studentId },
         })
       ).map(async (d) => {
-        const quizScore = await prisma.question.aggregate({
-          _sum: { score: true },
-          where: { quizId: d.quizId },
-        });
+        const quizScore: { score: number } = await Question.aggregate(
+          'score',
+          'sum',
+          {
+            where: { quizId: d.quizId },
+          }
+        );
 
-        const quiz = await prisma.quiz.findFirst({
+        const quiz = await Quiz.findOne({
           where: { id: d.quizId },
-          include: { topic: { include: { course: true } } },
+          include: [{ model: Topic, include: [Course] }],
         });
 
         return {
-          score: d._sum.score,
-          totalScore: quizScore._sum.score,
+          score: d.score,
+          totalScore: quizScore.score,
           quiz,
         };
       })

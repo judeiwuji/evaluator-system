@@ -1,8 +1,9 @@
-import { Student, User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { CreateAnswerRequest } from 'server/models/Answer.model';
 import { AppRequest } from 'server/models/App.model';
 import { Feedback } from 'server/models/Feedback.model';
+import Student from 'server/models/Student.model';
+import User from 'server/models/User.model';
 import { CreateAnswerSchema } from 'server/models/schema/Answer.schema';
 import { createAnswer } from 'server/services/Answer.service';
 import { validator } from 'server/utils/yup.util';

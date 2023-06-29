@@ -55,6 +55,7 @@ export class StudentFormComponent implements OnInit {
     };
     this.studentService.create(request).subscribe((response) => {
       this.toastr.clear();
+      this.processing = false;
       if (response.success) {
         this.toastr.success('Added', '', { timeOut: 2000 });
         this.activeModal.close(response.result);

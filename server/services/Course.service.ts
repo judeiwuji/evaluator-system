@@ -1,12 +1,13 @@
-import { PrismaClient, User } from '@prisma/client';
-import {
+import { Op } from 'sequelize';
+import Activity from 'server/models/Activity.model';
+import Course, {
   CreateCourseRequest,
   DeleteCourseRequest,
   UpdateCourseRequest,
 } from 'server/models/Course.model';
 import { Feedback } from 'server/models/Feedback.model';
 import Pagination from 'server/models/Pagination.model';
-import prisma from '../utils/prisma.util';
+import User from 'server/models/User.model';
 
 export const createCourse = async (
   request: CreateCourseRequest,
@@ -14,19 +15,14 @@ export const createCourse = async (
 ) => {
   let feedback: Feedback;
   try {
-    const courseCodeExists = await prisma.course.findFirst({
-      where: {
-        code: request.code,
-        teacherId: request.teacherId,
-        deletedAt: { equals: null },
-      },
+    const courseCodeExists = await Course.findOne({
+      where: { code: request.code, teacherId: request.teacherId },
     });
 
-    const courseTitleExists = await prisma.course.findFirst({
+    const courseTitleExists = await Course.findOne({
       where: {
         title: request.title,
         teacherId: request.teacherId,
-        deletedAt: { equals: null },
       },
     });
 
@@ -36,21 +32,15 @@ export const createCourse = async (
       feedback = new Feedback(false, 'Course title already exists');
     } else {
       feedback = new Feedback(true, 'success');
-      feedback.result = await prisma.course.create({
-        data: {
-          code: request.code,
-          title: request.title,
-          teacherId: request.teacherId,
-          createdAt: new Date(),
-        },
+      feedback.result = await Course.create({
+        code: request.code,
+        title: request.title,
+        teacherId: request.teacherId,
       });
       // Track Activity
-      await prisma.activity.create({
-        data: {
-          userId: user.id,
-          content: `Added a new course '${request.title}'`,
-          createdAt: new Date(),
-        },
+      await Activity.create({
+        userId: user.id,
+        content: `Added a new course '${request.title}'`,
       });
     }
   } catch (error) {
@@ -64,7 +54,7 @@ export const getCourse = async (id: number) => {
   let feedback: Feedback;
   try {
     feedback = new Feedback(true, 'success');
-    feedback.result = await prisma.course.findFirst({ where: { id } });
+    feedback.result = await Course.findOne({ where: { id } });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
     console.log(error);
@@ -79,23 +69,23 @@ export const getCourses = async (
 ) => {
   let feedback: Feedback;
   try {
-    let filter: any = { deletedAt: { equals: null } };
+    let filter: any = {};
     if (search) {
-      filter.title = { contains: search };
+      filter.title = { [Op.like]: `%${search}%` };
     }
 
     if (teacherId) {
-      filter.teacherId = { equals: teacherId };
+      filter.teacherId = teacherId;
     }
 
-    let totalPages = await prisma.course.count({ where: filter });
+    let totalPages = await Course.count({ where: filter });
     let pagination = new Pagination(page, 20, totalPages);
     feedback = new Feedback(true, 'success');
-    feedback.results = await prisma.course.findMany({
+    feedback.results = await Course.findAll({
       where: filter,
-      skip: pagination.skip,
-      take: pagination.take,
-      orderBy: { code: 'asc' },
+      offset: pagination.skip,
+      limit: pagination.take,
+      order: [['code', 'asc']],
     });
     feedback.page = pagination.page;
     feedback.pages = pagination.totalPages;
@@ -112,19 +102,21 @@ export const updateCourse = async (
 ) => {
   let feedback: Feedback;
   try {
-    const updated = await prisma.course.update({
-      data: { title: request.title, code: request.code },
-      where: { id: Number(request.id) },
+    const course = await Course.findByPk(Number(request.id));
+    if (!course) {
+      throw new Error('Not found');
+    }
+
+    const updated = await course.update({
+      title: request.title,
+      code: request.code,
     });
     feedback = new Feedback(true, 'success');
 
     // Track Activity
-    await prisma.activity.create({
-      data: {
-        userId: user.id,
-        content: `Updated a course '${updated.title}'`,
-        createdAt: new Date(),
-      },
+    await Activity.create({
+      userId: user.id,
+      content: `Updated a course '${updated.title}'`,
     });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
@@ -138,18 +130,17 @@ export const deleteCourse = async (
 ) => {
   let feedback: Feedback;
   try {
-    const deleted = await prisma.course.update({
-      data: { deletedAt: new Date() },
-      where: { id: Number(request.id) },
-    });
+    const course = await Course.findByPk(Number(request.id));
+    if (!course) {
+      throw new Error('Not found');
+    }
+
+    await course.destroy();
     feedback = new Feedback(true, 'success');
     // Track Activity
-    await prisma.activity.create({
-      data: {
-        userId: user.id,
-        content: `deleted a course '${deleted.title}'`,
-        createdAt: new Date(),
-      },
+    await Activity.create({
+      userId: user.id,
+      content: `deleted a course '${course.title}'`,
     });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');

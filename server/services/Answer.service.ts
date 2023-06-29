@@ -1,16 +1,17 @@
-import { PrismaClient } from '@prisma/client';
-import { CreateAnswerRequest } from 'server/models/Answer.model';
+import Answer, { CreateAnswerRequest } from 'server/models/Answer.model';
 import { Feedback } from 'server/models/Feedback.model';
 import { getStudentQuizResult } from './Student.service';
-import prisma from '../utils/prisma.util';
+import Quiz from 'server/models/Quiz.model';
+import Question from 'server/models/Question.model';
 
 export const createAnswer = async (request: CreateAnswerRequest) => {
   let feedback: Feedback;
   try {
-    const quizStopped = await prisma.quiz.findFirst({
+    const quizStopped = await Quiz.findOne({
       where: { id: request.quizId, active: false },
     });
-    const alreadyAnswered = await prisma.answer.findFirst({
+
+    const alreadyAnswered = await Answer.findOne({
       where: { questionId: request.questionId, studentId: request.studentId },
     });
     if (quizStopped) {
@@ -21,15 +22,12 @@ export const createAnswer = async (request: CreateAnswerRequest) => {
     } else if (alreadyAnswered) {
       feedback = new Feedback(false, 'Already answered');
     } else {
-      const { id } = await prisma.answer.create({
-        data: {
-          answer: request.answer,
-          studentId: request.studentId,
-          questionId: request.questionId,
-          quizId: request.quizId,
-          score: await markAnswer(request.answer, request.questionId),
-          createdAt: new Date(),
-        },
+      const { id } = await Answer.create({
+        answer: request.answer,
+        studentId: request.studentId,
+        questionId: request.questionId,
+        quizId: request.quizId,
+        score: await markAnswer(request.answer, request.questionId),
       });
       feedback = await getStudentQuizResult(request.studentId, request.quizId);
     }
@@ -43,7 +41,7 @@ export const createAnswer = async (request: CreateAnswerRequest) => {
 const markAnswer = async (answer: string, questionId: number) => {
   let score = 0;
   try {
-    const question = await prisma.question.findFirst({
+    const question = await Question.findOne({
       where: { id: questionId },
     });
     // compare answer

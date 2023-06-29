@@ -1,4 +1,3 @@
-import { User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { AppRequest } from 'server/models/App.model';
 import { Feedback } from 'server/models/Feedback.model';
@@ -11,6 +10,7 @@ import {
   UpdateQuestionOptionRequest,
   UpdateQuestionRequest,
 } from 'server/models/Question.model';
+import User from 'server/models/User.model';
 import { DeleteAdminSchema } from 'server/models/schema/Admin.schema';
 import {
   CreateQuestionOptionSchema,

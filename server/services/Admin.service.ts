@@ -1,5 +1,4 @@
-import { PrismaClient, User } from '@prisma/client';
-import {
+import Admin, {
   CreateAdminRequest,
   DeleteAdminRequest,
   UpdateAdminRequest,
@@ -8,59 +7,60 @@ import { UserType } from 'server/models/Enums';
 import { Feedback } from 'server/models/Feedback.model';
 import * as bcrypt from 'bcryptjs';
 import Pagination from 'server/models/Pagination.model';
-import prisma from '../utils/prisma.util';
+import User from 'server/models/User.model';
+import DB from 'server/models/engine/DBStorage';
+import UserDTO from 'server/models/DTOs/UserDTO';
+import Activity from 'server/models/Activity.model';
+import Student from 'server/models/Student.model';
+import Teacher from 'server/models/Teacher.model';
+import Department from 'server/models/Department.model';
+import { Op } from 'sequelize';
 
 const SALT_ROUND = Number(process.env['SALT_ROUND']);
 
 export const createAdmin = async (request: CreateAdminRequest, user: User) => {
   let feedback: Feedback;
+  const transaction = await DB.transaction();
   try {
-    const emailExists = await prisma.user.findFirst({
+    const emailExists = await User.findOne({
       where: { email: request.email },
+      transaction,
     });
     if (!emailExists) {
       const salt = bcrypt.genSaltSync(SALT_ROUND);
       const hash = bcrypt.hashSync(request.password, salt);
-      const admin = await prisma.user.create({
-        data: {
+      const adminUser = await User.create(
+        {
           surname: request.surname,
           othernames: request.othernames,
           email: request.email,
           password: hash,
           type: UserType.Admin,
-          createdAt: new Date(),
-          admin: { create: {} },
         },
+        { transaction }
+      );
+      const admin = await Admin.create(
+        { userId: adminUser.id },
+        { transaction }
+      );
+      // Track Activity
+      await Activity.create({
+        userId: user.id,
+        content: `created a new admin '${adminUser.surname} ${adminUser.othernames}'`,
       });
+      transaction.commit();
+
       feedback = new Feedback(true, 'success');
-      const newAdmin = await prisma.admin.findFirst({
-        where: { userId: admin.id },
-        select: {
-          userId: true,
-          user: {
-            select: {
-              surname: true,
-              othernames: true,
-              email: true,
-              avatar: true,
-              type: true,
-            },
-          },
-        },
+      const newAdmin = await Admin.findOne({
+        where: { id: admin.id },
+        include: [{ model: User, attributes: UserDTO }],
       });
       feedback.result = newAdmin;
-      // Track Activity
-      await prisma.activity.create({
-        data: {
-          userId: user.id,
-          content: `created a new admin '${newAdmin?.user.surname} ${newAdmin?.user.othernames}'`,
-          createdAt: new Date(),
-        },
-      });
     } else {
       feedback = new Feedback(false, 'email already exists.');
     }
   } catch (error) {
+    transaction.rollback();
     console.log(error);
     feedback = new Feedback(false, 'Failed to create account');
   }
@@ -71,19 +71,9 @@ export const getAdmin = async (id: number) => {
   let feedback: Feedback;
   try {
     feedback = new Feedback(true, 'success');
-    feedback.result = await prisma.admin.findFirst({
-      where: { id, user: { deletedAt: { equals: null } } },
-      include: {
-        user: {
-          select: {
-            surname: true,
-            othernames: true,
-            avatar: true,
-            email: true,
-            type: true,
-          },
-        },
-      },
+    feedback.result = await Admin.findOne({
+      where: { id },
+      include: [{ model: User, attributes: UserDTO }],
     });
   } catch (error) {
     console.log(error);
@@ -95,33 +85,33 @@ export const getAdmin = async (id: number) => {
 export const getAdmins = async (page: number, search?: string) => {
   let feedback: Feedback;
   try {
-    let filter: any = { user: { deletedAt: { equals: null } } };
+    let filter: any = {};
     if (search && search !== 'undefined') {
-      filter.user.surname = { contains: search };
-      filter.user.othernames = { contains: search };
+      filter = {
+        [Op.or]: [
+          { surname: { [Op.like]: `%${search}%` } },
+          { othernames: { [Op.like]: `%${search}%` } },
+        ],
+      };
     }
 
-    let totalPages = await prisma.admin.count({ where: filter });
+    let totalPages = await Admin.count({
+      include: [{ model: User, where: filter }],
+    });
     let pagination = new Pagination(page, 10, totalPages);
 
     feedback = new Feedback(true, 'success');
-    feedback.results = await prisma.admin.findMany({
-      where: filter,
-      skip: pagination.skip,
-      take: pagination.take,
-      include: {
-        user: {
-          select: {
-            surname: true,
-            othernames: true,
-            email: true,
-            avatar: true,
-            id: true,
-            type: true,
-          },
+    feedback.results = await Admin.findAll({
+      offset: pagination.skip,
+      limit: pagination.take,
+      include: [
+        {
+          model: User,
+          attributes: UserDTO,
+          order: [['surname', 'ASC']],
+          where: filter,
         },
-      },
-      orderBy: { user: { surname: 'asc' } },
+      ],
     });
     feedback.page = pagination.page;
     feedback.pages = pagination.totalPages;
@@ -141,32 +131,27 @@ export const updateAdmin = async (request: UpdateAdminRequest, user: User) => {
       hash = bcrypt.hashSync(request.password, salt);
     }
 
-    await prisma.admin.update({
-      data: {
-        user: {
-          update: {
-            surname: request.surname,
-            othernames: request.othernames,
-            email: request.email,
-            password: hash,
-          },
-        },
-      },
-      where: { id: Number(request.id) },
+    const admin = await Admin.findByPk(request.id, { include: [User] });
+    if (!admin) {
+      throw new Error('Not found');
+    }
+
+    await admin.user.update({
+      surname: request.surname,
+      othernames: request.othernames,
+      email: request.email,
+      password: hash,
     });
 
     feedback = new Feedback(true, 'success');
-    const updated = await prisma.admin.findFirst({
+    const updated = await Admin.findOne({
       where: { id: Number(request.id) },
-      include: { user: true },
+      include: [{ model: User, attributes: UserDTO }],
     });
     // Track Activity
-    await prisma.activity.create({
-      data: {
-        userId: user.id,
-        content: `updated a admin '${updated?.user.surname} ${updated?.user.othernames}' record`,
-        createdAt: new Date(),
-      },
+    await Activity.create({
+      userId: user.id,
+      content: `updated a admin '${updated?.user.surname} ${updated?.user.othernames}' record`,
     });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
@@ -178,22 +163,19 @@ export const updateAdmin = async (request: UpdateAdminRequest, user: User) => {
 export const deleteAdmin = async (request: DeleteAdminRequest, user: User) => {
   let feedback: Feedback;
   try {
-    await prisma.admin.update({
-      data: { user: { update: { deletedAt: new Date() } } },
+    await Admin.destroy({
       where: { id: Number(request.id) },
     });
     feedback = new Feedback(true, 'success');
-    const updated = await prisma.admin.findFirst({
-      where: { id: Number(request.id) },
-      include: { user: true },
+
+    const admin = await Admin.findByPk(Number(request.id), {
+      include: [User],
+      paranoid: false,
     });
     // Track Activity
-    await prisma.activity.create({
-      data: {
-        userId: user.id,
-        content: `updated a admin '${updated?.user.surname} ${updated?.user.othernames}' record`,
-        createdAt: new Date(),
-      },
+    await Activity.create({
+      userId: user.id,
+      content: `updated a admin '${admin?.user.surname} ${admin?.user.othernames}' record`,
     });
   } catch (error) {
     feedback = new Feedback(false, 'Operation failed');
@@ -205,21 +187,13 @@ export const deleteAdmin = async (request: DeleteAdminRequest, user: User) => {
 export const getAdminDashboardStats = async () => {
   let feedback: Feedback;
   try {
-    const admins = await prisma.admin.count({
-      where: { user: { deletedAt: { equals: null } } },
-    });
+    const admins = await Admin.count({});
 
-    const students = await prisma.student.count({
-      where: { user: { deletedAt: { equals: null } } },
-    });
+    const students = await Student.count({});
 
-    const teachers = await prisma.student.count({
-      where: { user: { deletedAt: { equals: null } } },
-    });
+    const teachers = await Teacher.count({});
 
-    const departments = await prisma.department.count({
-      where: { deletedAt: { equals: null } },
-    });
+    const departments = await Department.count({});
 
     feedback = new Feedback(true, 'success');
     feedback.result = {

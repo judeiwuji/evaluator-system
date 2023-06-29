@@ -2,17 +2,15 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from '@prisma/client';
-import { Router } from 'express';
 import { ToastrService } from 'ngx-toastr';
 import { MessageBoxComponent } from 'src/app/modals/message-box/message-box.component';
 import { TopicFormComponent } from 'src/app/modals/topic-form/topic-form.component';
+import { Course } from 'src/app/models/interface/Course.interface';
 import { Topic } from 'src/app/models/interface/Topic.interface';
 import {
   MessageBoxButton,
   MessageBoxType,
 } from 'src/app/models/MessageBox.model';
-import { AuthService } from 'src/app/services/auth.service';
 import { CourseService } from 'src/app/services/course.service';
 import { TopicService } from 'src/app/services/topic.service';
 

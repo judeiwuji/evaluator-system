@@ -1,9 +1,8 @@
-import { User } from '@prisma/client';
 import { Response } from 'express';
 import { AppRequest } from 'server/models/App.model';
 import { Feedback } from 'server/models/Feedback.model';
 import { UpdateUserSchema } from 'server/models/schema/User.schema';
-import {
+import User, {
   DeleteUserActivityRequest,
   UpdateUserRequest,
   UploadAvatarRequest,

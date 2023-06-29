@@ -1,10 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Quiz } from '@prisma/client';
 import { ToastrService } from 'ngx-toastr';
 import {
   CreateQuizRequest,
+  Quiz,
   UpdateQuizRequest,
 } from 'src/app/models/interface/Quiz.interface';
 import { QuizService } from 'src/app/services/quiz.service';

@@ -1,4 +1,3 @@
-import { User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { AppRequest } from 'server/models/App.model';
 import { Feedback } from 'server/models/Feedback.model';
@@ -8,6 +7,7 @@ import {
   UpdateQuizRequest,
   ValidateQuizTokenRequest,
 } from 'server/models/Quiz.model';
+import User from 'server/models/User.model';
 import {
   CreateQuizSchema,
   DeleteQuizSchema,
@@ -46,9 +46,9 @@ export const getQuizController = async (req: Request, res: Response) => {
   const { id, token } = req.query;
   let feedback: Feedback;
   if (id) {
-    feedback = await getQuiz({ id: Number(id), deletedAt: { equals: null } });
+    feedback = await getQuiz({ id: Number(id) });
   } else if (token) {
-    feedback = await getQuiz({ token, deletedAt: { equals: null } });
+    feedback = await getQuiz({ token });
   } else {
     feedback = new Feedback(false, 'id not found');
   }

@@ -1,4 +1,3 @@
-import { User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { AppRequest } from 'server/models/App.model';
 import {
@@ -7,6 +6,7 @@ import {
   UpdateCourseRequest,
 } from 'server/models/Course.model';
 import { Feedback } from 'server/models/Feedback.model';
+import User from 'server/models/User.model';
 import {
   CreateCourseSchema,
   DeleteCourseSchema,

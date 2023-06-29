@@ -22,6 +22,7 @@ import { Server } from 'socket.io';
 import { REQUEST, RESPONSE } from '@nguniversal/express-engine/tokens';
 import 'localstorage-polyfill';
 import * as path from 'path';
+import DB from 'server/models/engine/DBStorage';
 global['localStorage'] = localStorage;
 dotEnv.config();
 
@@ -34,6 +35,9 @@ export function App(): http.Server {
   const indexHtml = existsSync(join(distFolder, 'index.original.html'))
     ? 'index.original.html'
     : 'index';
+
+  // Synchronize DB
+  DB.sync({ alter: false });
 
   // setup middlewares
   app.use(express.json());

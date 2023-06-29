@@ -1,21 +1,27 @@
-import { PrismaClient, User } from '@prisma/client';
+import { Op } from 'sequelize';
+import Activity from 'server/models/Activity.model';
+import Admin from 'server/models/Admin.model';
+import UserDTO from 'server/models/DTOs/UserDTO';
+import Department from 'server/models/Department.model';
 import { Feedback } from 'server/models/Feedback.model';
-import {
+import Level from 'server/models/Level.model';
+import Student from 'server/models/Student.model';
+import Teacher from 'server/models/Teacher.model';
+import User, {
   DeleteUserActivityRequest,
   UpdateUserRequest,
 } from 'server/models/User.model';
-import prisma from '../utils/prisma.util';
 
 export const getUser = async (filter: any) => {
   let user: any | null;
   try {
-    user = await prisma.user.findFirst({
+    user = await User.findOne({
       where: filter,
-      include: {
-        student: { include: { department: true, level: true } },
-        admin: true,
-        teacher: { include: { department: true } },
-      },
+      include: [
+        Admin,
+        { model: Student, include: [Department, Level] },
+        { model: Teacher, include: [Department] },
+      ],
     });
   } catch (error) {
     console.log(error);
@@ -32,13 +38,9 @@ export const getUserActivities = async (userId: number, month: number) => {
     const startDate = new Date(year, month, 1);
     const endDate = new Date(year, month, totalDays);
     feedback = new Feedback(true, 'success');
-    feedback.results = await prisma.activity.findMany({
-      where: { userId, createdAt: { gte: startDate, lte: endDate } },
-      include: {
-        user: {
-          select: { surname: true, othernames: true, avatar: true, type: true },
-        },
-      },
+    feedback.results = await Activity.findAll({
+      where: { userId, createdAt: { [Op.gte]: startDate, [Op.lte]: endDate } },
+      include: [{ model: User, attributes: UserDTO }],
     });
   } catch (error) {
     console.log(error);
@@ -50,14 +52,16 @@ export const getUserActivities = async (userId: number, month: number) => {
 export const updateUser = async (request: UpdateUserRequest) => {
   let feedback: Feedback;
   try {
-    await prisma.user.update({
-      data: {
+    await User.update(
+      {
         surname: request.surname,
         othernames: request.othernames,
         avatar: request.avatar,
       },
-      where: { id: request.id },
-    });
+      {
+        where: { id: request.id },
+      }
+    );
     feedback = new Feedback(true, 'success');
   } catch (error) {
     console.log(error);
@@ -71,7 +75,7 @@ export const deleteUserActivity = async (
 ) => {
   let feedback: Feedback;
   try {
-    await prisma.activity.delete({
+    await Activity.destroy({
       where: { id: request.id },
     });
     feedback = new Feedback(true, 'success');

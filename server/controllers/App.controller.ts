@@ -19,6 +19,7 @@ import {
   changePassword,
   createAccessToken,
   getLevels,
+  installApp,
   logout,
   resetPassword,
 } from 'server/services/App.service';
@@ -148,5 +149,10 @@ export const currentUserController = async (req: AppRequest, res: Response) => {
 
 export const getLevelsController = async (req: Request, res: Response) => {
   let feedback: Feedback = await getLevels();
+  res.json(feedback);
+};
+
+export const installAppController = async (req: Request, res: Response) => {
+  let feedback: Feedback = await installApp();
   res.json(feedback);
 };
