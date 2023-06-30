@@ -46,6 +46,7 @@ export interface AnswerAttributes {
   quiz: Quiz;
   answer: string;
   score: number;
+  count?: number;
 }
 
 export interface AnswerCreationAttributes

@@ -55,8 +55,8 @@ export class QuizBoardComponent implements OnInit {
 
     if (isPlatformBrowser(this.platformId)) {
       this.intervalID = setInterval(() => {
-        this.loadQuestions();
         this.loadQuiz();
+        this.loadQuestions();
       }, 30000);
     }
   }

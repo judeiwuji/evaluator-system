@@ -172,13 +172,9 @@ export const getQuizResults = async (quizId: number) => {
   try {
     feedback = new Feedback(true, 'success');
 
-    const quizScore: { score: number } = await Question.aggregate(
-      'score',
-      'sum',
-      {
-        where: { quizId },
-      }
-    );
+    const quizScore: number = await Question.aggregate('score', 'sum', {
+      where: { quizId },
+    });
 
     let gradeScore = 0;
     let gradePosition = 0;
@@ -187,7 +183,7 @@ export const getQuizResults = async (quizId: number) => {
       (
         await Answer.findAll({
           group: ['studentId'],
-          attributes: [[DB.fn('sum', DB.col('score')), 'score']],
+          attributes: [[DB.fn('sum', DB.col('score')), 'score'], 'studentId'],
           where: { quizId },
           order: [['score', 'desc']],
         })
@@ -198,7 +194,7 @@ export const getQuizResults = async (quizId: number) => {
         });
         const result = {
           score: d.score,
-          totalScore: quizScore.score,
+          totalScore: quizScore,
           student,
           position: 0,
         };
@@ -237,19 +233,21 @@ export const generateQuizReport = async (quizId: number) => {
           attributes: [
             'questionId',
             'score',
+            'studentId',
             [DB.fn('count', DB.col('studentId')), 'count'],
           ],
           where: { quizId, score: { [Op.gt]: 0 } },
           order: [['count', 'DESC']],
         })
-      ).map(async (d: any) => {
+      ).map(async (d) => {
+        const answer = d.toJSON();
         const question = await Question.findOne({
-          where: { id: d.questionId },
+          where: { id: answer.questionId },
         });
 
         return {
           question,
-          count: d.count,
+          count: answer.count as number,
         };
       })
     );
@@ -267,13 +265,14 @@ export const generateQuizReport = async (quizId: number) => {
           order: [['count', 'DESC']],
         })
       ).map(async (d: any) => {
+        const answer = d.toJSON();
         const question = await Question.findOne({
-          where: { id: d.questionId },
+          where: { id: answer.questionId },
         });
 
         return {
           question,
-          count: d.count,
+          count: answer.count as number,
         };
       })
     );
@@ -289,7 +288,7 @@ export const generateQuizReport = async (quizId: number) => {
     };
 
     passRate.forEach((d) => {
-      addToDataset(d.question?.question as string, d.count, 0);
+      addToDataset(d.question?.question as string, d.count as number, 0);
       let found = false;
       for (let f of failureRate) {
         if (d.question?.id == f.question?.id) {

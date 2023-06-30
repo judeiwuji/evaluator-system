@@ -243,21 +243,17 @@ export const getStudentQuizResult = async (
   let feedback: Feedback;
   try {
     feedback = new Feedback(true, 'success');
-    const result: { score: number } = await Answer.aggregate('score', 'sum', {
+    const result: number = await Answer.aggregate('score', 'sum', {
       where: { studentId, quizId },
     });
-    const quizScore: { score: number } = await Question.aggregate(
-      'score',
-      'sum',
-      {
-        where: { quizId },
-      }
-    );
+    const quizScore: number = await Question.aggregate('score', 'sum', {
+      where: { quizId },
+    });
 
     const student = await findStudentBy({ id: studentId });
     feedback.result = {
-      score: result.score,
-      totalScore: quizScore.score,
+      score: result,
+      totalScore: quizScore,
       student,
     };
   } catch (error) {
@@ -280,13 +276,9 @@ export const getStudentQuizzesResult = async (studentId: number) => {
           where: { studentId },
         })
       ).map(async (d) => {
-        const quizScore: { score: number } = await Question.aggregate(
-          'score',
-          'sum',
-          {
-            where: { quizId: d.quizId },
-          }
-        );
+        const quizScore: number = await Question.aggregate('score', 'sum', {
+          where: { quizId: d.quizId },
+        });
 
         const quiz = await Quiz.findOne({
           where: { id: d.quizId },
@@ -295,7 +287,7 @@ export const getStudentQuizzesResult = async (studentId: number) => {
 
         return {
           score: d.score,
-          totalScore: quizScore.score,
+          totalScore: quizScore,
           quiz,
         };
       })

@@ -92,7 +92,7 @@ export const getQuestions = async (
 
     if (time > 0) {
       let date = new Date(time);
-      filter.createdAt = { gte: date };
+      filter.createdAt = { [Op.gte]: date };
     }
 
     const query: any = {
