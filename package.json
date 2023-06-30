@@ -81,5 +81,8 @@
     "karma-jasmine-html-reporter": "~1.7.0",
     "ts-node": "^10.5.0",
     "typescript": "~4.5.2"
+  },
+  "engines": {
+    "node": "18.16.0"
   }
 }
