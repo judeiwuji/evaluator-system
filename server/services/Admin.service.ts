@@ -18,7 +18,7 @@ import { Op } from 'sequelize';
 
 const SALT_ROUND = Number(process.env['SALT_ROUND']);
 
-export const createAdmin = async (request: CreateAdminRequest, user: User) => {
+export const createAdmin = async (request: CreateAdminRequest, user?: User) => {
   let feedback: Feedback;
   const transaction = await DB.transaction();
   try {
@@ -44,10 +44,12 @@ export const createAdmin = async (request: CreateAdminRequest, user: User) => {
         { transaction }
       );
       // Track Activity
-      await Activity.create({
-        userId: user.id,
-        content: `created a new admin '${adminUser.surname} ${adminUser.othernames}'`,
-      });
+      if (user) {
+        await Activity.create({
+          userId: user.id,
+          content: `created a new admin '${adminUser.surname} ${adminUser.othernames}'`,
+        });
+      }
       transaction.commit();
 
       feedback = new Feedback(true, 'success');
@@ -207,4 +209,21 @@ export const getAdminDashboardStats = async () => {
     feedback = new Feedback(false, 'Operation failed');
   }
   return feedback;
+};
+
+export const findAdminBy = async (query: any) => {
+  const admin = await Admin.findOne({
+    where: query,
+    include: [{ model: User, attributes: UserDTO }],
+  });
+
+  if (!admin) {
+    throw new Error('No record found');
+  }
+
+  return admin;
+};
+
+export const getAdminCount = async () => {
+  return Admin.count({});
 };

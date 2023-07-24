@@ -23,6 +23,7 @@ import { REQUEST, RESPONSE } from '@nguniversal/express-engine/tokens';
 import 'localstorage-polyfill';
 import * as path from 'path';
 import DB from 'server/models/engine/DBStorage';
+import installer from 'server/utils/installer';
 global['localStorage'] = localStorage;
 dotEnv.config();
 
@@ -38,6 +39,9 @@ export function App(): http.Server {
 
   // Synchronize DB
   DB.sync({ alter: false });
+
+  // app installer
+  installer();
 
   // setup middlewares
   app.use(express.json());
